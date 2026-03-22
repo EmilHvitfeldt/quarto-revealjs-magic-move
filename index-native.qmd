@@ -1,7 +1,6 @@
 ---
 format:
   revealjs:
-    theme: [default, styles.scss]
     width: 1280
     height: 720
     include-after-body:
