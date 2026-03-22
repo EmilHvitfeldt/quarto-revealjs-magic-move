@@ -23,8 +23,7 @@
 }
 
 .magic-move-container .magic-move-render span span[data-key] {
-  display: inline;
-  transition: all 0.5s ease-in-out;
+  display: inline-block;
 }
 
 .magic-move-container .magic-move-render span span[data-entering] {
@@ -69,10 +68,9 @@ function initNativeMagicMove() {
       return parseTokensFromHTML(block, stepIndex)
     })
 
-    console.log('Parsed steps:', steps)
-
     // Assign keys to tokens for matching across steps
     assignTokenKeys(steps)
+
 
     // Calculate max height needed
     const maxLines = Math.max(...steps.map(s => s.lines.length))
@@ -222,79 +220,15 @@ function assignTokenKeys(steps) {
 }
 
 function matchSteps(prevStep, currStep) {
-  const prevLines = prevStep.lines
-  const currLines = currStep.lines
-
-  // Create line signatures (trimmed content)
-  const prevSigs = prevLines.map(line => line.map(t => t.content).join('').trim())
-  const currSigs = currLines.map(line => line.map(t => t.content).join('').trim())
-
-  // Track which prev lines have been matched
-  const usedPrevLines = new Set()
-
-  // For each current line, find best matching previous line
-  for (let ci = 0; ci < currLines.length; ci++) {
-    let bestMatch = -1
-    let bestScore = 0
-
-    for (let pi = 0; pi < prevLines.length; pi++) {
-      if (usedPrevLines.has(pi)) continue
-
-      const score = lineSimilarity(prevSigs[pi], currSigs[ci])
-      // Prefer lines at similar positions
-      const positionBonus = 1 / (1 + Math.abs(pi - ci) * 0.5)
-      const totalScore = score * 0.9 + positionBonus * 0.1
-
-      if (totalScore > bestScore && score > 0.3) {
-        bestScore = totalScore
-        bestMatch = pi
-      }
-    }
-
-    if (bestMatch >= 0) {
-      usedPrevLines.add(bestMatch)
-      matchLineTokens(prevLines[bestMatch], currLines[ci])
-    }
-  }
-}
-
-function lineSimilarity(a, b) {
-  if (a === b) return 1
-  if (!a || !b) return 0
-
-  // Longest common subsequence ratio
-  const lcs = longestCommonSubsequence(a, b)
-  return (2 * lcs) / (a.length + b.length)
-}
-
-function longestCommonSubsequence(a, b) {
-  const m = a.length
-  const n = b.length
-  const dp = Array(m + 1).fill(null).map(() => Array(n + 1).fill(0))
-
-  for (let i = 1; i <= m; i++) {
-    for (let j = 1; j <= n; j++) {
-      if (a[i - 1] === b[j - 1]) {
-        dp[i][j] = dp[i - 1][j - 1] + 1
-      } else {
-        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1])
-      }
-    }
-  }
-
-  return dp[m][n]
-}
-
-function matchLineTokens(prevLine, currLine) {
-  // Match tokens with same content and classes
+  // Global token matching by content + classes
   const usedPrev = new Set()
 
-  for (const currToken of currLine) {
-    // First try exact match (content + classes)
-    for (let i = 0; i < prevLine.length; i++) {
+  // First pass: exact match (content + classes)
+  for (const currToken of currStep.tokens) {
+    for (let i = 0; i < prevStep.tokens.length; i++) {
       if (usedPrev.has(i)) continue
 
-      const prevToken = prevLine[i]
+      const prevToken = prevStep.tokens[i]
       if (prevToken.content === currToken.content &&
           arraysEqual(prevToken.classes, currToken.classes)) {
         currToken.key = prevToken.key
@@ -302,22 +236,25 @@ function matchLineTokens(prevLine, currLine) {
         break
       }
     }
+  }
 
-    // If no exact match, try content-only match
-    if (!currToken.key) {
-      for (let i = 0; i < prevLine.length; i++) {
-        if (usedPrev.has(i)) continue
+  // Second pass: content-only match for remaining unmatched tokens
+  for (const currToken of currStep.tokens) {
+    if (currToken.key) continue // already matched
 
-        const prevToken = prevLine[i]
-        if (prevToken.content === currToken.content) {
-          currToken.key = prevToken.key
-          usedPrev.add(i)
-          break
-        }
+    for (let i = 0; i < prevStep.tokens.length; i++) {
+      if (usedPrev.has(i)) continue
+
+      const prevToken = prevStep.tokens[i]
+      if (prevToken.content === currToken.content) {
+        currToken.key = prevToken.key
+        usedPrev.add(i)
+        break
       }
     }
   }
 }
+
 
 function arraysEqual(a, b) {
   if (a.length !== b.length) return false
@@ -358,47 +295,67 @@ function animateToStep(container, fromStep, toStep) {
   const fromKeys = new Set(fromStep.tokens.map(t => t.key))
   const toKeys = new Set(toStep.tokens.map(t => t.key))
 
-  // Mark tokens that are leaving (now nested inside line wrappers)
+  // FLIP: First - record current positions
+  const oldPositions = new Map()
   const currentSpans = container.querySelectorAll('span > span[data-key]')
   for (const span of currentSpans) {
-    const key = span.dataset.key
-    if (!toKeys.has(key)) {
-      span.dataset.leaving = 'true'
+    const rect = span.getBoundingClientRect()
+    oldPositions.set(span.dataset.key, { x: rect.left, y: rect.top })
+  }
+
+  // Render new state (Last)
+  container.innerHTML = ''
+
+  for (let lineIdx = 0; lineIdx < toStep.lines.length; lineIdx++) {
+    const line = toStep.lines[lineIdx]
+
+    const lineSpan = document.createElement('span')
+    lineSpan.id = `mm-${container.closest('.magic-move-container')?.dataset.lang || 'code'}-${lineIdx + 1}`
+
+    for (const token of line) {
+      const span = document.createElement('span')
+      span.className = token.classes.join(' ')
+      span.textContent = token.content
+      span.dataset.key = token.key
+      lineSpan.appendChild(span)
+    }
+
+    container.appendChild(lineSpan)
+
+    if (lineIdx < toStep.lines.length - 1) {
+      container.appendChild(document.createTextNode('\n'))
     }
   }
 
-  // After leave animation, render new state
-  setTimeout(() => {
-    container.innerHTML = ''
+  // Invert & Play
+  const newSpans = container.querySelectorAll('span > span[data-key]')
+  for (const span of newSpans) {
+    const key = span.dataset.key
 
-    for (let lineIdx = 0; lineIdx < toStep.lines.length; lineIdx++) {
-      const line = toStep.lines[lineIdx]
+    if (oldPositions.has(key)) {
+      // FLIP: Invert - calculate delta and apply transform
+      const oldPos = oldPositions.get(key)
+      const newRect = span.getBoundingClientRect()
+      const deltaX = oldPos.x - newRect.left
+      const deltaY = oldPos.y - newRect.top
 
-      // Create line wrapper span
-      const lineSpan = document.createElement('span')
-      lineSpan.id = `mm-${container.closest('.magic-move-container')?.dataset.lang || 'code'}-${lineIdx + 1}`
+      if (Math.abs(deltaX) > 0.5 || Math.abs(deltaY) > 0.5) {
+        // Apply inverted position (no transition)
+        span.style.transform = `translate(${deltaX}px, ${deltaY}px)`
+        span.style.transition = 'none'
 
-      for (const token of line) {
-        const span = document.createElement('span')
-        span.className = token.classes.join(' ')
-        span.textContent = token.content
-        span.dataset.key = token.key
+        // Force reflow
+        span.offsetHeight
 
-        // Mark new tokens as entering
-        if (!fromKeys.has(token.key)) {
-          span.dataset.entering = 'true'
-        }
-
-        lineSpan.appendChild(span)
+        // Play - animate to final position
+        span.style.transition = 'transform 0.5s ease-in-out'
+        span.style.transform = ''
       }
-
-      container.appendChild(lineSpan)
-
-      if (lineIdx < toStep.lines.length - 1) {
-        container.appendChild(document.createTextNode('\n'))
-      }
+    } else {
+      // New token - fade in
+      span.dataset.entering = 'true'
     }
-  }, 300)
+  }
 }
 
 // Wait for Reveal to be ready
