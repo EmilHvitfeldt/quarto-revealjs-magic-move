@@ -1,20 +1,20 @@
 <style>
-.magic-move-container {
+.magic-move {
   position: relative;
 }
 
-.magic-move-container pre {
+.magic-move pre {
   margin: 0;
 }
 
-.magic-move-container .magic-move-wrapper {
+.magic-move .magic-move-wrapper {
   position: relative;
   padding: 1em;
   border-radius: 8px;
   overflow: hidden;
 }
 
-.magic-move-container .magic-move-render {
+.magic-move .magic-move-render {
   position: relative;
   white-space: pre;
   font-family: var(--bs-font-monospace, monospace);
@@ -22,15 +22,15 @@
   line-height: 1.5;
 }
 
-.magic-move-container .magic-move-render span span[data-key] {
+.magic-move .magic-move-render span span[data-key] {
   display: inline-block;
 }
 
-.magic-move-container .magic-move-render span span[data-entering] {
+.magic-move .magic-move-render span span[data-entering] {
   animation: magic-enter 0.5s ease-in-out;
 }
 
-.magic-move-container .magic-move-render span span[data-leaving] {
+.magic-move .magic-move-render span span[data-leaving] {
   animation: magic-leave 0.5s ease-in-out forwards;
 }
 
@@ -57,7 +57,7 @@
 
 <script>
 function initNativeMagicMove() {
-  const containers = document.querySelectorAll('.magic-move-container')
+  const containers = document.querySelectorAll('.magic-move')
 
   for (const container of containers) {
     const codeBlocks = container.querySelectorAll('pre code')
@@ -82,7 +82,9 @@ function initNativeMagicMove() {
     // <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">
     const firstPre = container.querySelector('pre')
     const originalCode = container.querySelector('pre code')
-    const lang = container.dataset.lang || 'r'
+    // Detect language from original code block classes (e.g., "sourceCode r" -> "r")
+    const langClass = originalCode ? [...originalCode.classList].find(c => c !== 'sourceCode') : null
+    const lang = langClass || container.dataset.lang || 'r'
 
     // Outer div with sourceCode class
     const outerDiv = document.createElement('div')
@@ -319,7 +321,7 @@ function renderStep(container, step) {
 
     // Create line wrapper span (like Quarto's <span id="cb1-1">)
     const lineSpan = document.createElement('span')
-    lineSpan.id = `mm-${container.closest('.magic-move-container')?.dataset.lang || 'code'}-${lineIdx + 1}`
+    lineSpan.id = `mm-${container.closest('.magic-move')?.dataset.lang || 'code'}-${lineIdx + 1}`
 
     for (const token of line) {
       const span = document.createElement('span')
@@ -357,7 +359,7 @@ function animateToStep(container, fromStep, toStep) {
     const line = toStep.lines[lineIdx]
 
     const lineSpan = document.createElement('span')
-    lineSpan.id = `mm-${container.closest('.magic-move-container')?.dataset.lang || 'code'}-${lineIdx + 1}`
+    lineSpan.id = `mm-${container.closest('.magic-move')?.dataset.lang || 'code'}-${lineIdx + 1}`
 
     for (const token of line) {
       const span = document.createElement('span')

@@ -202,7 +202,7 @@
 </section>
 <section id="magic-move-example" class="slide level2">
 <h2>Magic move example</h2>
-<div class="magic-move-container" data-lang="r">
+<div class="magic-move">
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="" aria-hidden="true" tabindex="-1"></a>Year.Release <span class="ot">&lt;-</span> game<span class="sc">$</span>Year.Release</span>
 <span id="cb2-2"><a href="" aria-hidden="true" tabindex="-1"></a>counts <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="fu">table</span>(Year.Release))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><span class="fragment magic-move-step"></span></p>
@@ -440,22 +440,22 @@
       });
     </script>
     <style>
-    .magic-move-container {
+    .magic-move {
       position: relative;
     }
 
-    .magic-move-container pre {
+    .magic-move pre {
       margin: 0;
     }
 
-    .magic-move-container .magic-move-wrapper {
+    .magic-move .magic-move-wrapper {
       position: relative;
       padding: 1em;
       border-radius: 8px;
       overflow: hidden;
     }
 
-    .magic-move-container .magic-move-render {
+    .magic-move .magic-move-render {
       position: relative;
       white-space: pre;
       font-family: var(--bs-font-monospace, monospace);
@@ -463,15 +463,15 @@
       line-height: 1.5;
     }
 
-    .magic-move-container .magic-move-render span span[data-key] {
+    .magic-move .magic-move-render span span[data-key] {
       display: inline-block;
     }
 
-    .magic-move-container .magic-move-render span span[data-entering] {
+    .magic-move .magic-move-render span span[data-entering] {
       animation: magic-enter 0.5s ease-in-out;
     }
 
-    .magic-move-container .magic-move-render span span[data-leaving] {
+    .magic-move .magic-move-render span span[data-leaving] {
       animation: magic-leave 0.5s ease-in-out forwards;
     }
 
@@ -498,7 +498,7 @@
 
     <script>
     function initNativeMagicMove() {
-      const containers = document.querySelectorAll('.magic-move-container')
+      const containers = document.querySelectorAll('.magic-move')
 
       for (const container of containers) {
         const codeBlocks = container.querySelectorAll('pre code')
@@ -509,7 +509,7 @@
           return parseTokensFromHTML(block, stepIndex)
         })
 
-        // Split tokens on delimiters for finer-grained matching
+        // Post-process: split tokens on delimiters (parens, brackets, commas) for better animations
         steps = steps.map(step => splitTokensOnDelimiters(step))
 
         // Assign keys to tokens for matching across steps
@@ -523,7 +523,9 @@
         // <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">
         const firstPre = container.querySelector('pre')
         const originalCode = container.querySelector('pre code')
-        const lang = container.dataset.lang || 'r'
+        // Detect language from original code block classes (e.g., "sourceCode r" -> "r")
+        const langClass = originalCode ? [...originalCode.classList].find(c => c !== 'sourceCode') : null
+        const lang = langClass || container.dataset.lang || 'r'
 
         // Outer div with sourceCode class
         const outerDiv = document.createElement('div')
@@ -577,7 +579,10 @@
       }
     }
 
-    // Split tokens on delimiters for finer-grained matching
+    // Post-process tokens: split on delimiters for finer-grained matching
+    // The native highlight.js tokenizer groups things like "(Year.Release))" as one token,
+    // but for better magic-move animations we want each parenthesis to be separate.
+    // This allows individual characters to animate independently when code is reformatted.
     function splitTokensOnDelimiters(step) {
       const delimiters = /([()[\]{},])/
 
@@ -757,7 +762,7 @@
 
         // Create line wrapper span (like Quarto's <span id="cb1-1">)
         const lineSpan = document.createElement('span')
-        lineSpan.id = `mm-${container.closest('.magic-move-container')?.dataset.lang || 'code'}-${lineIdx + 1}`
+        lineSpan.id = `mm-${container.closest('.magic-move')?.dataset.lang || 'code'}-${lineIdx + 1}`
 
         for (const token of line) {
           const span = document.createElement('span')
@@ -795,7 +800,7 @@
         const line = toStep.lines[lineIdx]
 
         const lineSpan = document.createElement('span')
-        lineSpan.id = `mm-${container.closest('.magic-move-container')?.dataset.lang || 'code'}-${lineIdx + 1}`
+        lineSpan.id = `mm-${container.closest('.magic-move')?.dataset.lang || 'code'}-${lineIdx + 1}`
 
         for (const token of line) {
           const span = document.createElement('span')

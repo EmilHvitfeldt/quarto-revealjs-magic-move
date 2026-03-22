@@ -18,7 +18,7 @@ counts <- data.frame(table(Year.Release))
 
 ## Magic move example
 
-::: {.magic-move-container data-lang="r"}
+::: {.magic-move}
 
 ```r
 Year.Release <- game$Year.Release
