@@ -1,0 +1,8 @@
+/* quarto syntax highlight colors */
+/* other quarto variables */
+/* syntax highlight based on Pandoc's rules */
+.prevent-inlining {
+  content: "</";
+}
+
+/*# sourceMappingURL=036d8049bc356f1eb6ea1a9ca3d0572f.css.map */

@@ -1,0 +1,44 @@
+---
+format:
+  revealjs:
+    theme: [default, styles.scss]
+    highlight-style: none
+    width: 1280
+    height: 720
+    include-after-body: 
+      - "all-the-js-code.html"
+pagetitle: Title of Talk
+echo: false
+code-line-numbers: false
+---
+
+## Magic move example
+
+::: {.magic-move-container data-lang="r"}
+
+```r
+Year.Release <- game$Year.Release
+counts <- data.frame(table(Year.Release))
+```
+
+[]{.fragment .magic-move-step}
+
+```r
+Year.Release <- game$Year.Release
+counts <- data.frame(table(Year.Release))
+p <- game %>%
+  select(Year.Release, Global.Sales)
+```
+
+[]{.fragment .magic-move-step}
+
+```r
+Year.Release <- game$Year.Release
+counts <- data.frame(table(Year.Release))
+p <- game %>%
+  select(Year.Release, Global.Sales) %>%
+  group_by(Year.Release) %>%
+  summarise(Total.Sales = sum(Global.Sales))
+```
+
+:::

@@ -1,0 +1,148 @@
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shiki-magic-move/dist/style.css">
+
+<style>
+.shiki-magic-move-wrapper {
+  padding: 1em;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.shiki-magic-move-render-container {
+  --smm-duration: 0.5s;
+  --smm-easing: ease-in-out;
+  position: relative;
+  white-space: pre;
+}
+</style>
+
+<script type="module">
+import { createHighlighter } from 'https://esm.sh/shiki@3.0.0'
+import { codeToKeyedTokens, syncTokenKeys } from 'https://esm.sh/shiki-magic-move/core'
+import { MagicMoveRenderer } from 'https://esm.sh/shiki-magic-move/renderer'
+
+async function initMagicMove() {
+  const highlighter = await createHighlighter({
+    themes: ['github-dark'],
+    langs: ['r', 'javascript', 'python']
+  })
+
+  const containers = document.querySelectorAll('.magic-move-container')
+
+  for (const container of containers) {
+    const codeBlocks = container.querySelectorAll('pre code')
+    if (codeBlocks.length < 2) continue
+
+    const steps = Array.from(codeBlocks).map(block => block.innerText)
+    const lang = container.dataset.lang || 'r'
+
+    const maxLines = Math.max(...steps.map(s => s.split('\n').length))
+
+    let tokens = steps.map(code =>
+      codeToKeyedTokens(highlighter, code, { lang, theme: 'github-dark' })
+    )
+
+    for (let i = 1; i < tokens.length; i++) {
+      syncTokenKeys(tokens[i - 1], tokens[i])
+    }
+
+    const wrapper = document.createElement('div')
+    wrapper.className = 'shiki-magic-move-wrapper'
+
+    const renderTarget = document.createElement('div')
+    renderTarget.className = 'shiki-magic-move-render-container'
+
+    wrapper.appendChild(renderTarget)
+
+    container.querySelectorAll('pre').forEach(pre => pre.style.display = 'none')
+    container.querySelectorAll('p').forEach(p => {
+      if (p.querySelector('.magic-move-step')) p.style.display = 'none'
+    })
+    container.insertBefore(wrapper, container.firstChild)
+
+    const renderer = new MagicMoveRenderer(renderTarget)
+
+    const lineHeight = 1.4
+    const estimatedHeight = (maxLines * lineHeight)
+
+    Object.assign(wrapper.style, {
+      background: tokens[0].bg,
+      color: tokens[0].fg,
+      minHeight: (estimatedHeight + 2) + 'em'
+    })
+
+    Object.assign(renderTarget.style, {
+      minHeight: estimatedHeight + 'em'
+    })
+
+    renderer.replace(tokens[0])
+
+    let currentStep = 0
+    const slide = container.closest('section')
+
+    const getScale = () => {
+      const slides = document.querySelector('.reveal .slides')
+      if (!slides) return 1
+      const transform = window.getComputedStyle(slides).transform
+      if (!transform || transform === 'none') return 1
+      const matrix = new DOMMatrix(transform)
+      return matrix.a
+    }
+
+    const animateToStep = (step) => {
+      const scale = getScale()
+
+      // Apply counter-scale
+      renderTarget.style.transform = `scale(${1/scale})`
+      renderTarget.style.transformOrigin = 'top left'
+
+      // Force layout so transform is applied for position calculations
+      renderTarget.getBoundingClientRect()
+
+      // Render calculates positions with transform applied
+      renderer.render(tokens[step], {
+        duration: 500,
+        stagger: 3,
+        delayMove: 0,
+        delayLeave: 0,
+        delayEnter: 0.3,
+        easing: 'ease-in-out',
+        animateContainer: false
+      })
+
+      // Immediately remove transform (before browser paints)
+      renderTarget.style.transform = ''
+      renderTarget.style.transformOrigin = ''
+    }
+
+    Reveal.on('fragmentshown', (event) => {
+      if (slide.contains(event.fragment) && event.fragment.classList.contains('magic-move-step')) {
+        currentStep++
+        if (currentStep < tokens.length) {
+          animateToStep(currentStep)
+        }
+      }
+    })
+
+    Reveal.on('fragmenthidden', (event) => {
+      if (slide.contains(event.fragment) && event.fragment.classList.contains('magic-move-step')) {
+        currentStep--
+        if (currentStep >= 0) {
+          animateToStep(currentStep)
+        }
+      }
+    })
+  }
+}
+
+function waitForReveal() {
+  if (typeof Reveal !== 'undefined' && Reveal.isReady && Reveal.isReady()) {
+    initMagicMove()
+  } else if (typeof Reveal !== 'undefined') {
+    Reveal.on('ready', initMagicMove)
+  } else {
+    setTimeout(waitForReveal, 100)
+  }
+}
+
+waitForReveal()
+</script>
