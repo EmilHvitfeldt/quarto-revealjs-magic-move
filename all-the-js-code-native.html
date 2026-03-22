@@ -63,6 +63,36 @@ function initNativeMagicMove() {
     const codeBlocks = container.querySelectorAll('pre code')
     if (codeBlocks.length < 2) continue
 
+    // Auto-generate fragment markers between code blocks
+    const pres = container.querySelectorAll('pre')
+    for (let i = 0; i < pres.length - 1; i++) {
+      // Check if there's already a fragment after this pre
+      let nextSibling = pres[i].nextElementSibling
+      while (nextSibling && nextSibling.tagName === 'DIV' && nextSibling.classList.contains('sourceCode')) {
+        // Skip sourceCode wrapper divs
+        nextSibling = nextSibling.nextElementSibling
+      }
+
+      const hasFragment = nextSibling?.querySelector?.('.magic-move-step') ||
+                          nextSibling?.classList?.contains('magic-move-step')
+
+      if (!hasFragment) {
+        // Insert a fragment marker
+        const fragment = document.createElement('span')
+        fragment.className = 'fragment magic-move-step'
+        fragment.dataset.fragmentIndex = i
+
+        // Insert after the pre (or its wrapper)
+        const insertAfter = pres[i].closest('.sourceCode') || pres[i]
+        insertAfter.parentNode.insertBefore(fragment, insertAfter.nextSibling)
+      }
+    }
+
+    // Re-sync reveal.js to recognize new fragments
+    if (typeof Reveal !== 'undefined' && Reveal.sync) {
+      Reveal.sync()
+    }
+
     // Parse tokens from each highlighted code block
     let steps = Array.from(codeBlocks).map((block, stepIndex) => {
       return parseTokensFromHTML(block, stepIndex)

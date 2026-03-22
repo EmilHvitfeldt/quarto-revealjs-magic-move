@@ -205,14 +205,12 @@
 <div class="magic-move">
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="" aria-hidden="true" tabindex="-1"></a>Year.Release <span class="ot">&lt;-</span> game<span class="sc">$</span>Year.Release</span>
 <span id="cb2-2"><a href="" aria-hidden="true" tabindex="-1"></a>counts <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="fu">table</span>(Year.Release))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p><span class="fragment magic-move-step"></span></p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="" aria-hidden="true" tabindex="-1"></a>Year.Release <span class="ot">&lt;-</span> game<span class="sc">$</span>Year.Release</span>
 <span id="cb3-2"><a href="" aria-hidden="true" tabindex="-1"></a>counts <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
 <span id="cb3-3"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="fu">table</span>(Year.Release)</span>
 <span id="cb3-4"><a href="" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb3-5"><a href="" aria-hidden="true" tabindex="-1"></a>p <span class="ot">&lt;-</span> game <span class="sc">%&gt;%</span></span>
 <span id="cb3-6"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(Year.Release, Global.Sales)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p><span class="fragment magic-move-step"></span></p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="" aria-hidden="true" tabindex="-1"></a>Year.Release <span class="ot">&lt;-</span> game<span class="sc">$</span>Year.Release</span>
 <span id="cb4-2"><a href="" aria-hidden="true" tabindex="-1"></a>counts <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
 <span id="cb4-3"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="fu">table</span>(Year.Release)</span>
@@ -503,6 +501,36 @@
       for (const container of containers) {
         const codeBlocks = container.querySelectorAll('pre code')
         if (codeBlocks.length < 2) continue
+
+        // Auto-generate fragment markers between code blocks
+        const pres = container.querySelectorAll('pre')
+        for (let i = 0; i < pres.length - 1; i++) {
+          // Check if there's already a fragment after this pre
+          let nextSibling = pres[i].nextElementSibling
+          while (nextSibling && nextSibling.tagName === 'DIV' && nextSibling.classList.contains('sourceCode')) {
+            // Skip sourceCode wrapper divs
+            nextSibling = nextSibling.nextElementSibling
+          }
+
+          const hasFragment = nextSibling?.querySelector?.('.magic-move-step') ||
+                              nextSibling?.classList?.contains('magic-move-step')
+
+          if (!hasFragment) {
+            // Insert a fragment marker
+            const fragment = document.createElement('span')
+            fragment.className = 'fragment magic-move-step'
+            fragment.dataset.fragmentIndex = i
+
+            // Insert after the pre (or its wrapper)
+            const insertAfter = pres[i].closest('.sourceCode') || pres[i]
+            insertAfter.parentNode.insertBefore(fragment, insertAfter.nextSibling)
+          }
+        }
+
+        // Re-sync reveal.js to recognize new fragments
+        if (typeof Reveal !== 'undefined' && Reveal.sync) {
+          Reveal.sync()
+        }
 
         // Parse tokens from each highlighted code block
         let steps = Array.from(codeBlocks).map((block, stepIndex) => {

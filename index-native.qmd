@@ -18,14 +18,12 @@ counts <- data.frame(table(Year.Release))
 
 ## Magic move example
 
-::: {.magic-move}
+::: magic-move
 
 ```r
 Year.Release <- game$Year.Release
 counts <- data.frame(table(Year.Release))
 ```
-
-[]{.fragment .magic-move-step}
 
 ```r
 Year.Release <- game$Year.Release
@@ -35,8 +33,6 @@ counts <- data.frame(
 p <- game %>%
   select(Year.Release, Global.Sales)
 ```
-
-[]{.fragment .magic-move-step}
 
 ```r
 Year.Release <- game$Year.Release
