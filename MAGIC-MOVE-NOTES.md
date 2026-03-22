@@ -321,3 +321,73 @@ renderer.render(precomputedTokens[step], options)
 ### Custom Token Matching
 
 Our custom `improveTokenMatching` and `fixDuplicateKeys` functions would need to run at build time too if pre-computing tokens. They modify the token keys which is essential for good animations.
+
+---
+
+## Native Implementation (No Shiki)
+
+An alternative implementation exists in `all-the-js-code-native.html` and `index-native.qmd` that uses Quarto's built-in highlight.js tokenization instead of shiki.
+
+### Key Differences from Shiki Approach
+
+1. **No external dependencies** - uses Quarto's native syntax highlighting
+2. **Parses existing HTML** - reads tokens from already-highlighted `<span>` elements
+3. **FLIP animations** - implements First-Last-Invert-Play manually with CSS transitions
+4. **Global token matching** - matches tokens by content across the entire code, not line-by-line
+
+### Token Post-Processing
+
+The native highlight.js tokenizer produces coarser tokens than shiki. For example, `(Year.Release))` might be a single token instead of separate parentheses.
+
+To improve animation quality, tokens are **post-processed to split on delimiters**:
+
+```javascript
+// Delimiters that trigger splitting
+const delimiters = /([()[\]{},])/
+
+// "(Year.Release))" becomes: "(", "Year.Release", ")", ")"
+```
+
+This allows individual parentheses and brackets to animate independently when code is reformatted, producing smoother transitions.
+
+### Configuration
+
+```yaml
+format:
+  revealjs:
+    # Do NOT set highlight-style: none - we use native highlighting
+    include-after-body:
+      - "all-the-js-code-native.html"
+```
+
+### CSS Structure Requirements
+
+Quarto's syntax highlighting CSS uses selectors like `code span.ot`. The native implementation replicates Quarto's HTML structure:
+
+```html
+<div class="sourceCode">
+  <pre class="sourceCode r">
+    <code class="sourceCode r">
+      <span id="line-1">  <!-- line wrapper -->
+        <span class="fu">function</span>  <!-- token - NOT direct child of code -->
+      </span>
+    </code>
+  </pre>
+</div>
+```
+
+The line wrapper `<span>` is crucial - without it, the CSS selector `pre > code.sourceCode > span` would override token colors.
+
+### Limitations
+
+1. **Less granular tokenization** - highlight.js groups tokens differently than shiki
+2. **Post-processing helps but isn't perfect** - only splits on common delimiters
+3. **No theme control** - uses whatever theme Quarto applies
+
+### TODO
+
+- [ ] **Make the native tokenizer more granular** - Currently relying on post-processing to split on delimiters `()[]{},"`. Consider:
+  - Splitting on more delimiters (e.g., operators like `<-`, `%>%`, `=`, `+`, `-`)
+  - Splitting identifiers from adjacent punctuation
+  - Character-level tokenization for maximum flexibility (like shiki does)
+  - Preserving syntax highlighting classes when splitting

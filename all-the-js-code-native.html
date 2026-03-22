@@ -64,9 +64,12 @@ function initNativeMagicMove() {
     if (codeBlocks.length < 2) continue
 
     // Parse tokens from each highlighted code block
-    const steps = Array.from(codeBlocks).map((block, stepIndex) => {
+    let steps = Array.from(codeBlocks).map((block, stepIndex) => {
       return parseTokensFromHTML(block, stepIndex)
     })
+
+    // Post-process: split tokens on delimiters (parens, brackets, commas) for better animations
+    steps = steps.map(step => splitTokensOnDelimiters(step))
 
     // Assign keys to tokens for matching across steps
     assignTokenKeys(steps)
@@ -131,6 +134,50 @@ function initNativeMagicMove() {
       }
     })
   }
+}
+
+// Post-process tokens: split on delimiters for finer-grained matching
+// The native highlight.js tokenizer groups things like "(Year.Release))" as one token,
+// but for better magic-move animations we want each parenthesis to be separate.
+// This allows individual characters to animate independently when code is reformatted.
+function splitTokensOnDelimiters(step) {
+  const delimiters = /([()[\]{},])/
+
+  const newLines = []
+  const newTokens = []
+  let tokenIndex = 0
+
+  for (const line of step.lines) {
+    const newLine = []
+
+    for (const token of line) {
+      // Split the content on delimiters, keeping the delimiters
+      const parts = token.content.split(delimiters).filter(p => p !== '')
+
+      if (parts.length === 1) {
+        // No split needed
+        const newToken = { ...token, tokenIndex: tokenIndex++ }
+        newLine.push(newToken)
+        newTokens.push(newToken)
+      } else {
+        // Create a token for each part
+        for (const part of parts) {
+          const newToken = {
+            content: part,
+            classes: [...token.classes],
+            stepIndex: token.stepIndex,
+            tokenIndex: tokenIndex++
+          }
+          newLine.push(newToken)
+          newTokens.push(newToken)
+        }
+      }
+    }
+
+    newLines.push(newLine)
+  }
+
+  return { lines: newLines, tokens: newTokens }
 }
 
 // Parse tokens from Quarto's syntax highlighting output
