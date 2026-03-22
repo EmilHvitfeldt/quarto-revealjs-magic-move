@@ -25,7 +25,9 @@ counts <- data.frame(table(Year.Release))
 
 ```r
 Year.Release <- game$Year.Release
-counts <- data.frame(table(Year.Release))
+counts <- data.frame(
+  table(Year.Release)
+)
 p <- game %>%
   select(Year.Release, Global.Sales)
 ```
@@ -34,7 +36,9 @@ p <- game %>%
 
 ```r
 Year.Release <- game$Year.Release
-counts <- data.frame(table(Year.Release))
+counts <- data.frame(
+  table(Year.Release)
+)
 p <- game %>%
   select(Year.Release, Global.Sales) %>%
   group_by(Year.Release) %>%

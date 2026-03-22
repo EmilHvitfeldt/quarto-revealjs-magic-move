@@ -20,6 +20,151 @@ import { createHighlighter } from 'https://esm.sh/shiki@3.0.0'
 import { codeToKeyedTokens, syncTokenKeys } from 'https://esm.sh/shiki-magic-move/core'
 import { MagicMoveRenderer } from 'https://esm.sh/shiki-magic-move/renderer'
 
+// Helper to get line number for a token based on position in flat array
+function getTokenLine(tokens, index) {
+  let line = 0
+  const flat = tokens.tokens.flat()
+  for (let i = 0; i < index && i < flat.length; i++) {
+    if (flat[i].content.includes('\n')) {
+      line += (flat[i].content.match(/\n/g) || []).length
+    }
+  }
+  return line
+}
+
+// Custom function to improve token matching after syncTokenKeys
+function improveTokenMatching(prevTokens, nextTokens) {
+  const prevFlat = prevTokens.tokens.flat()
+  const nextFlat = nextTokens.tokens.flat()
+
+  // Get the hash prefix from prev tokens (they all share the same prefix)
+  const prevHashPrefix = prevFlat[0]?.key.split('-')[0]
+
+  // Build prev tokens with line info
+  let prevLine = 0
+  const prevWithLines = prevFlat.map((tok, idx) => {
+    const result = { tok, line: prevLine, idx }
+    if (tok.content.includes('\n')) {
+      prevLine += (tok.content.match(/\n/g) || []).length
+    }
+    return result
+  }).filter(item => item.tok.content.trim() !== '')
+
+  // For each next token, only try to improve matching if it wasn't already matched
+  let nextLine = 0
+  for (let i = 0; i < nextFlat.length; i++) {
+    const tok = nextFlat[i]
+
+    if (tok.content.includes('\n')) {
+      nextLine += (tok.content.match(/\n/g) || []).length
+    }
+
+    // Skip whitespace and newlines
+    if (tok.content.trim() === '') continue
+
+    // Check if this token was already matched by syncTokenKeys
+    const tokHashPrefix = tok.key.split('-')[0]
+    if (tokHashPrefix === prevHashPrefix) {
+      continue  // Already matched, don't override
+    }
+
+    // This token wasn't matched - try substring matching
+    // Prefer matches on the same or nearby lines
+    let bestMatch = null
+    let bestScore = 0
+
+    for (const prev of prevWithLines) {
+      const prevContent = prev.tok.content
+      const nextContent = tok.content
+
+      // Skip exact matches (should have been handled by syncTokenKeys)
+      if (prevContent === nextContent) continue
+
+      // Check if one contains the other
+      if (prevContent.includes(nextContent) || nextContent.includes(prevContent)) {
+        // Only match if they differ by at most 1 character (like adding/removing a closing paren)
+        const lenDiff = Math.abs(prevContent.length - nextContent.length)
+        if (lenDiff > 1) continue
+
+        // Score by similarity (how close the lengths are)
+        const minLen = Math.min(prevContent.length, nextContent.length)
+        const maxLen = Math.max(prevContent.length, nextContent.length)
+        const lengthScore = minLen / maxLen
+
+        // Bonus for being on the same or nearby line
+        const lineDiff = Math.abs(prev.line - nextLine)
+        const lineScore = 1 / (1 + lineDiff)  // 1.0 for same line, decreases with distance
+
+        const score = lengthScore * 0.5 + lineScore * 0.5
+
+        if (score > bestScore) {
+          bestMatch = prev.tok
+          bestScore = score
+        }
+      }
+    }
+
+    if (bestMatch) {
+      tok.key = bestMatch.key
+    }
+  }
+}
+
+// Fix duplicate key assignments - ensure each key is used only once per step
+// Keeps the key for the first occurrence (which is typically the correct positional match)
+function fixDuplicateKeys(tokens, prevTokens, stepIndex) {
+  const flat = tokens.tokens.flat()
+  let counter = 1000
+
+  // If we have previous tokens, build a map of key -> line number
+  const prevKeyLines = new Map()
+  if (prevTokens) {
+    let line = 0
+    for (const tok of prevTokens.tokens.flat()) {
+      if (!prevKeyLines.has(tok.key)) {
+        prevKeyLines.set(tok.key, line)
+      }
+      if (tok.content.includes('\n')) {
+        line += (tok.content.match(/\n/g) || []).length
+      }
+    }
+  }
+
+  // Group tokens by key to find duplicates
+  const tokensByKey = new Map()
+  let line = 0
+  for (const tok of flat) {
+    if (!tokensByKey.has(tok.key)) {
+      tokensByKey.set(tok.key, [])
+    }
+    tokensByKey.get(tok.key).push({ tok, line })
+    if (tok.content.includes('\n')) {
+      line += (tok.content.match(/\n/g) || []).length
+    }
+  }
+
+  // For each group of duplicates, keep the one closest to the original line
+  for (const [key, group] of tokensByKey) {
+    if (group.length <= 1) continue
+
+    const prevLine = prevKeyLines.get(key) ?? 0
+
+    // Debug logging for (Year.Release) related keys
+    if (group.some(g => g.tok.content.includes('Year.Release'))) {
+      console.log(`Step ${stepIndex} fixDuplicateKeys: key=${key.slice(-15)}, prevLine=${prevLine}, group:`,
+        group.map(g => ({ content: g.tok.content, line: g.line })))
+    }
+
+    // Sort by distance from previous line
+    group.sort((a, b) => Math.abs(a.line - prevLine) - Math.abs(b.line - prevLine))
+
+    // First one keeps the key, others get new unique keys
+    for (let i = 1; i < group.length; i++) {
+      group[i].tok.key = `unique-${counter++}`
+    }
+  }
+}
+
 async function initMagicMove() {
   const highlighter = await createHighlighter({
     themes: ['github-dark'],
@@ -41,9 +186,34 @@ async function initMagicMove() {
       codeToKeyedTokens(highlighter, code, { lang, theme: 'github-dark' })
     )
 
+    // Process each step completely before moving to the next
+    fixDuplicateKeys(tokens[0], null, 0)
     for (let i = 1; i < tokens.length; i++) {
+      // Sync with previous step
       syncTokenKeys(tokens[i - 1], tokens[i])
+      // Improve substring matches
+      improveTokenMatching(tokens[i - 1], tokens[i])
+      // Fix duplicates
+      fixDuplicateKeys(tokens[i], tokens[i - 1], i)
     }
+
+    // Debug: log (Year.Release) keys after all processing
+    console.log('After all processing:')
+    tokens.forEach((t, i) => {
+      const yrs = t.tokens.flat().filter(tok => tok.content === '(Year.Release)')
+      if (yrs.length) console.log(`  Step ${i} (Year.Release):`, yrs.map(tok => tok.key.slice(-15)))
+    })
+
+    // Debug: log tokens after improved sync
+    console.log('Tokens after improved sync:')
+    tokens.forEach((t, i) => {
+      console.log(`Step ${i}:`, t.tokens.flat().map(tok => `${tok.content}[${tok.key.slice(-10)}]`))
+      // Specifically log (Year.Release) tokens
+      const yearReleaseTokens = t.tokens.flat().filter(tok => tok.content === '(Year.Release)')
+      if (yearReleaseTokens.length > 0) {
+        console.log(`  Step ${i} (Year.Release) tokens:`, yearReleaseTokens.map(tok => tok.key))
+      }
+    })
 
     const wrapper = document.createElement('div')
     wrapper.className = 'shiki-magic-move-wrapper'
@@ -91,14 +261,10 @@ async function initMagicMove() {
     const animateToStep = (step) => {
       const scale = getScale()
 
-      // Apply counter-scale
       renderTarget.style.transform = `scale(${1/scale})`
       renderTarget.style.transformOrigin = 'top left'
-
-      // Force layout so transform is applied for position calculations
       renderTarget.getBoundingClientRect()
 
-      // Render calculates positions with transform applied
       renderer.render(tokens[step], {
         duration: 500,
         stagger: 3,
@@ -109,7 +275,6 @@ async function initMagicMove() {
         animateContainer: false
       })
 
-      // Immediately remove transform (before browser paints)
       renderTarget.style.transform = ''
       renderTarget.style.transformOrigin = ''
     }
