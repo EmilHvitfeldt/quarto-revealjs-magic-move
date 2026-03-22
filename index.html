@@ -151,6 +151,44 @@ p &lt;- game %&gt;%
   group_by(Year.Release) %&gt;%
   summarise(Total.Sales = sum(Global.Sales))</code></pre>
 </div>
+</section>
+<section id="if-else-expansion" class="slide level2">
+<h2>If-else expansion</h2>
+<div class="magic-move-container" data-lang="javascript">
+<pre class="javascript"><code>if (condition) a else if (condition2) b else c</code></pre>
+<p><span class="fragment magic-move-step"></span></p>
+<pre class="javascript"><code>if (condition) {
+  a
+} else if (condition2) {
+  b
+} else {
+  c
+}</code></pre>
+</div>
+</section>
+<section id="function-if-else-expansion" class="slide level2">
+<h2>Function if-else expansion</h2>
+<div class="magic-move-container" data-lang="r">
+<pre class="r"><code>fn &lt;- function(x) {
+  if (condition) stop("oh no")
+  if (condition) return(1)
+  if (condition) x &lt;- 1
+  x + 1
+}</code></pre>
+<p><span class="fragment magic-move-step"></span></p>
+<pre class="r"><code>fn &lt;- function(x) {
+  if (condition) {
+    stop("oh no")
+  }
+  if (condition) {
+    return(1)
+  }
+  if (condition) {
+    x &lt;- 1
+  }
+  x + 1
+}</code></pre>
+</div>
 
 </section>
     </div>

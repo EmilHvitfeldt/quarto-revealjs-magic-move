@@ -46,3 +46,57 @@ p <- game %>%
 ```
 
 :::
+
+## If-else expansion
+
+::: {.magic-move-container data-lang="javascript"}
+
+```javascript
+if (condition) a else if (condition2) b else c
+```
+
+[]{.fragment .magic-move-step}
+
+```javascript
+if (condition) {
+  a
+} else if (condition2) {
+  b
+} else {
+  c
+}
+```
+
+:::
+
+## Function if-else expansion
+
+::: {.magic-move-container data-lang="r"}
+
+```r
+fn <- function(x) {
+  if (condition) stop("oh no")
+  if (condition) return(1)
+  if (condition) x <- 1
+  x + 1
+}
+```
+
+[]{.fragment .magic-move-step}
+
+```r
+fn <- function(x) {
+  if (condition) {
+    stop("oh no")
+  }
+  if (condition) {
+    return(1)
+  }
+  if (condition) {
+    x <- 1
+  }
+  x + 1
+}
+```
+
+:::
