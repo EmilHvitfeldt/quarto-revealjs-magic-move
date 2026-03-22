@@ -1,0 +1,416 @@
+<style>
+.magic-move-container {
+  position: relative;
+}
+
+.magic-move-container pre {
+  margin: 0;
+}
+
+.magic-move-container .magic-move-wrapper {
+  position: relative;
+  padding: 1em;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.magic-move-container .magic-move-render {
+  position: relative;
+  white-space: pre;
+  font-family: var(--bs-font-monospace, monospace);
+  font-size: 0.875em;
+  line-height: 1.5;
+}
+
+.magic-move-container .magic-move-render span span[data-key] {
+  display: inline;
+  transition: all 0.5s ease-in-out;
+}
+
+.magic-move-container .magic-move-render span span[data-entering] {
+  animation: magic-enter 0.5s ease-in-out;
+}
+
+.magic-move-container .magic-move-render span span[data-leaving] {
+  animation: magic-leave 0.5s ease-in-out forwards;
+}
+
+@keyframes magic-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes magic-leave {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+</style>
+
+<script>
+function initNativeMagicMove() {
+  const containers = document.querySelectorAll('.magic-move-container')
+
+  for (const container of containers) {
+    const codeBlocks = container.querySelectorAll('pre code')
+    if (codeBlocks.length < 2) continue
+
+    // Parse tokens from each highlighted code block
+    const steps = Array.from(codeBlocks).map((block, stepIndex) => {
+      return parseTokensFromHTML(block, stepIndex)
+    })
+
+    console.log('Parsed steps:', steps)
+
+    // Assign keys to tokens for matching across steps
+    assignTokenKeys(steps)
+
+    // Calculate max height needed
+    const maxLines = Math.max(...steps.map(s => s.lines.length))
+
+    // Create render container - replicate Quarto's structure:
+    // <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">
+    const firstPre = container.querySelector('pre')
+    const originalCode = container.querySelector('pre code')
+    const lang = container.dataset.lang || 'r'
+
+    // Outer div with sourceCode class
+    const outerDiv = document.createElement('div')
+    outerDiv.className = 'sourceCode magic-move-wrapper-outer'
+
+    const wrapper = document.createElement('pre')
+    wrapper.className = `sourceCode ${lang} magic-move-wrapper`
+
+    const computedStyle = window.getComputedStyle(firstPre)
+    wrapper.style.background = computedStyle.backgroundColor || '#24292e'
+    wrapper.style.color = computedStyle.color || '#e1e4e8'
+    wrapper.style.minHeight = (maxLines * 1.5 + 2) + 'em'
+
+    const renderTarget = document.createElement('code')
+    renderTarget.className = `sourceCode ${lang} magic-move-render`
+    renderTarget.style.minHeight = (maxLines * 1.5) + 'em'
+    wrapper.appendChild(renderTarget)
+    outerDiv.appendChild(wrapper)
+
+    // Hide original code blocks
+    container.querySelectorAll('pre').forEach(pre => pre.style.display = 'none')
+    container.querySelectorAll('p').forEach(p => {
+      if (p.querySelector('.magic-move-step')) p.style.display = 'none'
+    })
+    container.insertBefore(outerDiv, container.firstChild)
+
+    // Render first step
+    let currentStep = 0
+    renderStep(renderTarget, steps[0])
+
+    const slide = container.closest('section')
+
+    // Handle fragment navigation
+    Reveal.on('fragmentshown', (event) => {
+      if (slide.contains(event.fragment) && event.fragment.classList.contains('magic-move-step')) {
+        currentStep++
+        if (currentStep < steps.length) {
+          animateToStep(renderTarget, steps[currentStep - 1], steps[currentStep])
+        }
+      }
+    })
+
+    Reveal.on('fragmenthidden', (event) => {
+      if (slide.contains(event.fragment) && event.fragment.classList.contains('magic-move-step')) {
+        currentStep--
+        if (currentStep >= 0) {
+          animateToStep(renderTarget, steps[currentStep + 1], steps[currentStep])
+        }
+      }
+    })
+  }
+}
+
+// Parse tokens from Quarto's syntax highlighting output
+// Structure: <code><span id="cb1-1"><a>...</a>text<span class="ot">token</span>...</span>...</code>
+function parseTokensFromHTML(codeElement, stepIndex) {
+  const lines = []
+  const allTokens = []
+  let tokenIndex = 0
+
+  // Get line spans (they have id like "cb1-1", "cb1-2", etc.)
+  const lineSpans = codeElement.querySelectorAll(':scope > span[id]')
+
+  if (lineSpans.length === 0) {
+    // Fallback: no line spans, parse directly
+    const tokens = parseNodeTokens(codeElement, stepIndex, tokenIndex)
+    allTokens.push(...tokens)
+    lines.push(tokens)
+  } else {
+    for (const lineSpan of lineSpans) {
+      const lineTokens = []
+
+      for (const node of lineSpan.childNodes) {
+        // Skip anchor elements
+        if (node.nodeType === Node.ELEMENT_NODE && node.tagName === 'A') {
+          continue
+        }
+
+        if (node.nodeType === Node.TEXT_NODE) {
+          const text = node.textContent
+          if (text) {
+            const token = {
+              content: text,
+              classes: [],
+              stepIndex,
+              tokenIndex: tokenIndex++
+            }
+            lineTokens.push(token)
+            allTokens.push(token)
+          }
+        } else if (node.nodeType === Node.ELEMENT_NODE && node.tagName === 'SPAN') {
+          const classes = Array.from(node.classList)
+          const text = node.textContent
+          if (text) {
+            const token = {
+              content: text,
+              classes: classes,
+              stepIndex,
+              tokenIndex: tokenIndex++
+            }
+            lineTokens.push(token)
+            allTokens.push(token)
+          }
+        }
+      }
+
+      lines.push(lineTokens)
+    }
+  }
+
+  return { lines, tokens: allTokens }
+}
+
+// Assign keys to tokens for matching
+function assignTokenKeys(steps) {
+  let keyCounter = 0
+
+  // First pass: assign unique keys to first step
+  for (const token of steps[0].tokens) {
+    token.key = `token-${keyCounter++}`
+  }
+
+  // For subsequent steps, try to match with previous step
+  for (let stepIdx = 1; stepIdx < steps.length; stepIdx++) {
+    const prevStep = steps[stepIdx - 1]
+    const currStep = steps[stepIdx]
+
+    // Match lines first, then tokens within matched lines
+    matchSteps(prevStep, currStep)
+
+    // Assign new keys to unmatched tokens
+    for (const token of currStep.tokens) {
+      if (!token.key) {
+        token.key = `token-${keyCounter++}`
+      }
+    }
+  }
+}
+
+function matchSteps(prevStep, currStep) {
+  const prevLines = prevStep.lines
+  const currLines = currStep.lines
+
+  // Create line signatures (trimmed content)
+  const prevSigs = prevLines.map(line => line.map(t => t.content).join('').trim())
+  const currSigs = currLines.map(line => line.map(t => t.content).join('').trim())
+
+  // Track which prev lines have been matched
+  const usedPrevLines = new Set()
+
+  // For each current line, find best matching previous line
+  for (let ci = 0; ci < currLines.length; ci++) {
+    let bestMatch = -1
+    let bestScore = 0
+
+    for (let pi = 0; pi < prevLines.length; pi++) {
+      if (usedPrevLines.has(pi)) continue
+
+      const score = lineSimilarity(prevSigs[pi], currSigs[ci])
+      // Prefer lines at similar positions
+      const positionBonus = 1 / (1 + Math.abs(pi - ci) * 0.5)
+      const totalScore = score * 0.9 + positionBonus * 0.1
+
+      if (totalScore > bestScore && score > 0.3) {
+        bestScore = totalScore
+        bestMatch = pi
+      }
+    }
+
+    if (bestMatch >= 0) {
+      usedPrevLines.add(bestMatch)
+      matchLineTokens(prevLines[bestMatch], currLines[ci])
+    }
+  }
+}
+
+function lineSimilarity(a, b) {
+  if (a === b) return 1
+  if (!a || !b) return 0
+
+  // Longest common subsequence ratio
+  const lcs = longestCommonSubsequence(a, b)
+  return (2 * lcs) / (a.length + b.length)
+}
+
+function longestCommonSubsequence(a, b) {
+  const m = a.length
+  const n = b.length
+  const dp = Array(m + 1).fill(null).map(() => Array(n + 1).fill(0))
+
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      if (a[i - 1] === b[j - 1]) {
+        dp[i][j] = dp[i - 1][j - 1] + 1
+      } else {
+        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1])
+      }
+    }
+  }
+
+  return dp[m][n]
+}
+
+function matchLineTokens(prevLine, currLine) {
+  // Match tokens with same content and classes
+  const usedPrev = new Set()
+
+  for (const currToken of currLine) {
+    // First try exact match (content + classes)
+    for (let i = 0; i < prevLine.length; i++) {
+      if (usedPrev.has(i)) continue
+
+      const prevToken = prevLine[i]
+      if (prevToken.content === currToken.content &&
+          arraysEqual(prevToken.classes, currToken.classes)) {
+        currToken.key = prevToken.key
+        usedPrev.add(i)
+        break
+      }
+    }
+
+    // If no exact match, try content-only match
+    if (!currToken.key) {
+      for (let i = 0; i < prevLine.length; i++) {
+        if (usedPrev.has(i)) continue
+
+        const prevToken = prevLine[i]
+        if (prevToken.content === currToken.content) {
+          currToken.key = prevToken.key
+          usedPrev.add(i)
+          break
+        }
+      }
+    }
+  }
+}
+
+function arraysEqual(a, b) {
+  if (a.length !== b.length) return false
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return false
+  }
+  return true
+}
+
+function renderStep(container, step) {
+  container.innerHTML = ''
+
+  for (let lineIdx = 0; lineIdx < step.lines.length; lineIdx++) {
+    const line = step.lines[lineIdx]
+
+    // Create line wrapper span (like Quarto's <span id="cb1-1">)
+    const lineSpan = document.createElement('span')
+    lineSpan.id = `mm-${container.closest('.magic-move-container')?.dataset.lang || 'code'}-${lineIdx + 1}`
+
+    for (const token of line) {
+      const span = document.createElement('span')
+      span.className = token.classes.join(' ')
+      span.textContent = token.content
+      span.dataset.key = token.key
+      lineSpan.appendChild(span)
+    }
+
+    container.appendChild(lineSpan)
+
+    // Add newline between lines (except after last line)
+    if (lineIdx < step.lines.length - 1) {
+      container.appendChild(document.createTextNode('\n'))
+    }
+  }
+}
+
+function animateToStep(container, fromStep, toStep) {
+  const fromKeys = new Set(fromStep.tokens.map(t => t.key))
+  const toKeys = new Set(toStep.tokens.map(t => t.key))
+
+  // Mark tokens that are leaving (now nested inside line wrappers)
+  const currentSpans = container.querySelectorAll('span > span[data-key]')
+  for (const span of currentSpans) {
+    const key = span.dataset.key
+    if (!toKeys.has(key)) {
+      span.dataset.leaving = 'true'
+    }
+  }
+
+  // After leave animation, render new state
+  setTimeout(() => {
+    container.innerHTML = ''
+
+    for (let lineIdx = 0; lineIdx < toStep.lines.length; lineIdx++) {
+      const line = toStep.lines[lineIdx]
+
+      // Create line wrapper span
+      const lineSpan = document.createElement('span')
+      lineSpan.id = `mm-${container.closest('.magic-move-container')?.dataset.lang || 'code'}-${lineIdx + 1}`
+
+      for (const token of line) {
+        const span = document.createElement('span')
+        span.className = token.classes.join(' ')
+        span.textContent = token.content
+        span.dataset.key = token.key
+
+        // Mark new tokens as entering
+        if (!fromKeys.has(token.key)) {
+          span.dataset.entering = 'true'
+        }
+
+        lineSpan.appendChild(span)
+      }
+
+      container.appendChild(lineSpan)
+
+      if (lineIdx < toStep.lines.length - 1) {
+        container.appendChild(document.createTextNode('\n'))
+      }
+    }
+  }, 300)
+}
+
+// Wait for Reveal to be ready
+function waitForReveal() {
+  if (typeof Reveal !== 'undefined' && Reveal.isReady && Reveal.isReady()) {
+    initNativeMagicMove()
+  } else if (typeof Reveal !== 'undefined') {
+    Reveal.on('ready', initNativeMagicMove)
+  } else {
+    setTimeout(waitForReveal, 100)
+  }
+}
+
+waitForReveal()
+</script>
