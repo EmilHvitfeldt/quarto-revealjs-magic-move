@@ -1,0 +1,82 @@
+---
+title: Slide-Based Magic Move Demo
+format: revealjs
+revealjs-plugins:
+  - magic-move
+---
+
+## Slope = 20 {.magic-move}
+
+```{r}
+#| label: "before"
+#| dev: svg
+library(ggplot2)
+mtcars |>
+  ggplot(aes(mpg, disp)) +
+  geom_point(size = 5) +
+  geom_abline(slope = 20, intercept = 0, linewidth = 5, color = "pink") +
+  theme_minimal(base_size = 16)+
+  lims(x = c(10, 35), y = c(100, 500))
+```
+
+## Slope = 10 {.magic-move}
+
+```{r}
+#| label: "after"
+#| dev: svg
+library(ggplot2)
+mtcars |>
+  ggplot(aes(mpg, disp)) +
+  geom_abline(slope = 10, intercept = 0, linewidth = 5, color = "pink") +
+  geom_point(size = 5) +
+  theme_minimal(base_size = 16)+
+  lims(x = c(10, 35), y = c(100, 500))
+```
+
+## Slope = 10 + jitter {.magic-move}
+
+```{r}
+#| label: "jitter"
+#| dev: svg
+library(ggplot2)
+set.seed(1234)
+mtcars |>
+  ggplot(aes(mpg, disp)) +
+  geom_abline(slope = 10, intercept = 0, linewidth = 5, color = "pink") +
+  geom_jitter(width = 2, height = 5, size = 5) +
+  theme_minimal(base_size = 16) +
+  lims(x = c(10, 35), y = c(100, 500))
+```
+
+
+## Break
+
+
+
+## Histogram - Normal {.magic-move}
+
+```{r}
+#| label: "hist-normal"
+#| dev: svg
+library(ggplot2)
+set.seed(42)
+data.frame(x = rnorm(1000, mean = 0, sd = 1)) |>
+  ggplot(aes(x)) +
+  geom_histogram(bins = 20, fill = "steelblue", color = "white") +
+  theme_minimal(base_size = 16) +
+  lims(x = c(-5, 5), y = c(0, 200))
+```
+
+## Histogram - Shifted {.magic-move}
+
+```{r}
+#| label: "hist-shifted"
+#| dev: svg
+library(ggplot2)
+set.seed(42)
+data.frame(x = rnorm(1000, mean = 2, sd = 1)) |>
+  ggplot(aes(x)) +
+  geom_histogram(bins = 20, fill = "steelblue", color = "white") +
+  theme_minimal(base_size = 16) +
+  lims(x = c(-5, 5), y = c(0, 200))
+```
