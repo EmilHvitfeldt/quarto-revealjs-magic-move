@@ -245,6 +245,15 @@ function animateSlideMagicMove(fromSlide, toSlide, fromStep, toStep, overlay, de
   // Hide the target code block temporarily
   toCodeBlock.style.visibility = 'hidden';
 
+  // Get reveal.js scale factor for font size adjustment
+  const slidesContainer = document.querySelector('.reveal .slides');
+  const slidesTransform = window.getComputedStyle(slidesContainer).transform;
+  let scale = 1;
+  if (slidesTransform && slidesTransform !== 'none') {
+    const matrix = new DOMMatrix(slidesTransform);
+    scale = matrix.a;
+  }
+
   // Create animated clones in the overlay for ALL "to" spans
   const clones = [];
 
@@ -263,12 +272,18 @@ function animateSlideMagicMove(fromSlide, toSlide, fromStep, toStep, overlay, de
     const startY = hasMatch ? fromData.y : toData.y;
     const startOpacity = hasMatch ? 1 : 0;
 
+    // Scale font size to match visual rendering (reveal.js uses CSS transforms)
+    const fontSize = parseFloat(computed.fontSize) * scale;
+    const lineHeight = parseFloat(computed.lineHeight) * scale;
+
     clone.style.cssText = `
       position: fixed;
       left: ${startX}px;
       top: ${startY}px;
       font-family: ${computed.fontFamily};
-      font-size: ${computed.fontSize};
+      font-size: ${fontSize}px;
+      line-height: ${isNaN(lineHeight) ? 'normal' : lineHeight + 'px'};
+      letter-spacing: ${computed.letterSpacing};
       color: ${computed.color};
       font-weight: ${computed.fontWeight};
       font-style: ${computed.fontStyle};
