@@ -150,3 +150,97 @@ grid.circle(
   gp = gpar(fill = "steelblue", col = NA)
 )
 ```
+
+## Break
+
+## Polyline (grid) - Wave 1 {.magic-move}
+
+```{r}
+#| label: "polyline-wave1"
+#| dev: svg
+library(grid)
+grid.newpage()
+grid.polyline(
+  x = c(0.1, 0.3, 0.5, 0.7, 0.9),
+  y = c(0.3, 0.7, 0.3, 0.7, 0.3),
+  gp = gpar(col = "darkorange", lwd = 5)
+)
+```
+
+## Polyline (grid) - Wave 2 {.magic-move}
+
+```{r}
+#| label: "polyline-wave2"
+#| dev: svg
+library(grid)
+grid.newpage()
+grid.polyline(
+  x = c(0.1, 0.3, 0.5, 0.7, 0.9),
+  y = c(0.5, 0.8, 0.5, 0.8, 0.5),
+  gp = gpar(col = "darkorange", lwd = 5)
+)
+```
+
+## Break
+
+## Polygon (grid) - Triangle {.magic-move}
+
+```{r}
+#| label: "polygon-triangle"
+#| dev: svg
+library(grid)
+grid.newpage()
+grid.polygon(
+  x = c(0.2, 0.5, 0.8),
+  y = c(0.2, 0.8, 0.2),
+  gp = gpar(fill = "purple", col = "white", lwd = 2)
+)
+```
+
+## Polygon (grid) - Moved Triangle {.magic-move}
+
+```{r}
+#| label: "polygon-triangle-moved"
+#| dev: svg
+library(grid)
+grid.newpage()
+grid.polygon(
+  x = c(0.3, 0.6, 0.9),
+  y = c(0.3, 0.9, 0.3),
+  gp = gpar(fill = "purple", col = "white", lwd = 2)
+)
+```
+
+## Break
+
+## Area Chart - Normal {.magic-move}
+
+```{r}
+#| label: "area-normal"
+#| dev: svg
+library(ggplot2)
+data.frame(
+  x = 1:10,
+  y = c(1, 3, 2, 5, 4, 6, 5, 7, 6, 8)
+) |>
+  ggplot(aes(x, y)) +
+  geom_area(fill = "forestgreen", alpha = 0.7) +
+  theme_minimal(base_size = 16) +
+  lims(x = c(0, 11), y = c(0, 10))
+```
+
+## Area Chart - Shifted {.magic-move}
+
+```{r}
+#| label: "area-shifted"
+#| dev: svg
+library(ggplot2)
+data.frame(
+  x = 1:10,
+  y = c(2, 4, 3, 6, 5, 7, 6, 8, 7, 9)
+) |>
+  ggplot(aes(x, y)) +
+  geom_area(fill = "forestgreen", alpha = 0.7) +
+  theme_minimal(base_size = 16) +
+  lims(x = c(0, 11), y = c(0, 10))
+```

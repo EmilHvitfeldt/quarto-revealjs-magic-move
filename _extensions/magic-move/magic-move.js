@@ -606,15 +606,22 @@ function animateSvgMagicMove(fromSlide, toSlide, fromSvg, toSvg, deck, onComplet
   const toCircles = parseSvgCircles(toSvg);
   const fromLines = parseSvgLines(fromSvg);
   const toLines = parseSvgLines(toSvg);
+  const fromPolylines = parseSvgPolylines(fromSvg);
+  const toPolylines = parseSvgPolylines(toSvg);
+  const fromPolygons = parseSvgPolygons(fromSvg);
+  const toPolygons = parseSvgPolygons(toSvg);
 
   // Match elements between SVGs
   const pathMatches = matchSvgPaths(fromPaths, toPaths);
   const rectMatches = matchSvgRects(fromRects, toRects);
   const circleMatches = matchSvgCircles(fromCircles, toCircles);
   const lineMatches = matchSvgLines(fromLines, toLines);
+  const polylineMatches = matchSvgPolylines(fromPolylines, toPolylines);
+  const polygonMatches = matchSvgPolygons(fromPolygons, toPolygons);
 
   if (pathMatches.length === 0 && rectMatches.length === 0 &&
-      circleMatches.length === 0 && lineMatches.length === 0) {
+      circleMatches.length === 0 && lineMatches.length === 0 &&
+      polylineMatches.length === 0 && polygonMatches.length === 0) {
     onComplete();
     return;
   }
@@ -654,6 +661,16 @@ function animateSvgMagicMove(fromSlide, toSlide, fromSvg, toSvg, deck, onComplet
     match.fromY1 = parseFloat(match.fromLine.getAttribute('y1'));
     match.fromX2 = parseFloat(match.fromLine.getAttribute('x2'));
     match.fromY2 = parseFloat(match.fromLine.getAttribute('y2'));
+  }
+
+  // Capture "from" polyline data
+  for (const match of polylineMatches) {
+    match.fromPoints = match.fromPolyline.getAttribute('points');
+  }
+
+  // Capture "from" polygon data
+  for (const match of polygonMatches) {
+    match.fromPoints = match.fromPolygon.getAttribute('points');
   }
 
   // Restore fromSlide
@@ -710,6 +727,22 @@ function animateSvgMagicMove(fromSlide, toSlide, fromSvg, toSvg, deck, onComplet
     match.toLine.setAttribute('y2', match.fromY2);
   }
 
+  // Capture "to" polyline data and set up animation
+  for (const match of polylineMatches) {
+    match.toPoints = match.toPolyline.getAttribute('points');
+
+    // Set the "to" polyline to start at the "from" position
+    match.toPolyline.setAttribute('points', match.fromPoints);
+  }
+
+  // Capture "to" polygon data and set up animation
+  for (const match of polygonMatches) {
+    match.toPoints = match.toPolygon.getAttribute('points');
+
+    // Set the "to" polygon to start at the "from" position
+    match.toPolygon.setAttribute('points', match.fromPoints);
+  }
+
   // Force reflow
   toSvg.getBoundingClientRect();
 
@@ -726,6 +759,12 @@ function animateSvgMagicMove(fromSlide, toSlide, fromSvg, toSvg, deck, onComplet
     }
     for (const match of lineMatches) {
       animateLine(match.toLine, match, 500);
+    }
+    for (const match of polylineMatches) {
+      animatePolyline(match.toPolyline, match.fromPoints, match.toPoints, 500);
+    }
+    for (const match of polygonMatches) {
+      animatePolygon(match.toPolygon, match.fromPoints, match.toPoints, 500);
     }
   });
 
@@ -1305,6 +1344,377 @@ function animateLine(lineElement, match, duration) {
   }
 
   requestAnimationFrame(animate);
+}
+
+// =============================================================================
+// POLYLINE SUPPORT
+// =============================================================================
+
+function parseSvgPolylines(svg) {
+  const polylines = [];
+
+  const polylineElements = svg.querySelectorAll('polyline');
+
+  for (const polyline of polylineElements) {
+    const points = polyline.getAttribute('points');
+    if (!points) continue;
+
+    // Get parent clip-path for identification
+    const parent = polyline.closest('g[clip-path]');
+    const clipPath = parent ? parent.getAttribute('clip-path') : null;
+
+    // Get stroke/fill properties for matching
+    const stroke = polyline.getAttribute('stroke') ||
+                   window.getComputedStyle(polyline).stroke;
+    const fill = polyline.getAttribute('fill') ||
+                 window.getComputedStyle(polyline).fill;
+    const strokeWidth = polyline.getAttribute('stroke-width') ||
+                        window.getComputedStyle(polyline).strokeWidth;
+
+    // Parse points to get centroid for matching
+    const parsedPoints = parsePointsAttribute(points);
+    const centroid = computeCentroid(parsedPoints);
+
+    polylines.push({
+      element: polyline,
+      points: points,
+      parsedPoints: parsedPoints,
+      centroid: centroid,
+      clipPath: clipPath,
+      stroke: stroke,
+      fill: fill,
+      strokeWidth: strokeWidth,
+      elementType: 'polyline'
+    });
+  }
+
+  return polylines;
+}
+
+function matchSvgPolylines(fromPolylines, toPolylines) {
+  const matches = [];
+
+  // Group polylines by their visual characteristics
+  const fromByType = groupPolylinesByType(fromPolylines);
+  const toByType = groupPolylinesByType(toPolylines);
+
+  // Match polylines within each type group by centroid position
+  for (const type of Object.keys(fromByType)) {
+    const fromGroup = fromByType[type] || [];
+    const toGroup = toByType[type] || [];
+
+    // Sort by centroid position
+    fromGroup.sort((a, b) => a.centroid.x - b.centroid.x || a.centroid.y - b.centroid.y);
+    toGroup.sort((a, b) => a.centroid.x - b.centroid.x || a.centroid.y - b.centroid.y);
+
+    // Match by position in sorted group
+    const count = Math.min(fromGroup.length, toGroup.length);
+    for (let i = 0; i < count; i++) {
+      const fromPolyline = fromGroup[i];
+      const toPolyline = toGroup[i];
+
+      // Only animate if points differ
+      if (fromPolyline.points !== toPolyline.points) {
+        matches.push({
+          fromPolyline: fromPolyline.element,
+          toPolyline: toPolyline.element
+        });
+      }
+    }
+  }
+
+  return matches;
+}
+
+function groupPolylinesByType(polylines) {
+  const groups = {};
+
+  for (const polyline of polylines) {
+    const signature = createPolylineSignature(polyline);
+
+    if (!groups[signature]) {
+      groups[signature] = [];
+    }
+    groups[signature].push(polyline);
+  }
+
+  return groups;
+}
+
+function createPolylineSignature(polyline) {
+  const parts = [
+    polyline.clipPath || 'none',
+    polyline.fill || 'none',
+    polyline.stroke || 'none',
+    polyline.strokeWidth || '0'
+  ];
+  return parts.join('|');
+}
+
+function animatePolyline(polylineElement, fromPoints, toPoints, duration) {
+  const fromParsed = parsePointsAttribute(fromPoints);
+  const toParsed = parsePointsAttribute(toPoints);
+
+  // If point counts differ, we need to interpolate
+  const fromInterpolated = normalizePointCount(fromParsed, toParsed.length);
+  const toInterpolated = normalizePointCount(toParsed, fromParsed.length);
+
+  // Use the longer array length
+  const targetLength = Math.max(fromParsed.length, toParsed.length);
+  const fromNormalized = normalizePointCount(fromParsed, targetLength);
+  const toNormalized = normalizePointCount(toParsed, targetLength);
+
+  const startTime = performance.now();
+
+  function animate(currentTime) {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+
+    // Easing: ease-in-out
+    const eased = progress < 0.5
+      ? 2 * progress * progress
+      : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
+    // Interpolate points
+    const interpolated = interpolatePoints(fromNormalized, toNormalized, eased);
+    const pointsStr = pointsToString(interpolated);
+
+    polylineElement.setAttribute('points', pointsStr);
+
+    if (progress < 1) {
+      requestAnimationFrame(animate);
+    }
+  }
+
+  requestAnimationFrame(animate);
+}
+
+// =============================================================================
+// POLYGON SUPPORT
+// =============================================================================
+
+function parseSvgPolygons(svg) {
+  const polygons = [];
+
+  const polygonElements = svg.querySelectorAll('polygon');
+
+  for (const polygon of polygonElements) {
+    const points = polygon.getAttribute('points');
+    if (!points) continue;
+
+    // Get parent clip-path for identification
+    const parent = polygon.closest('g[clip-path]');
+    const clipPath = parent ? parent.getAttribute('clip-path') : null;
+
+    // Get stroke/fill properties for matching
+    const stroke = polygon.getAttribute('stroke') ||
+                   window.getComputedStyle(polygon).stroke;
+    const fill = polygon.getAttribute('fill') ||
+                 window.getComputedStyle(polygon).fill;
+    const strokeWidth = polygon.getAttribute('stroke-width') ||
+                        window.getComputedStyle(polygon).strokeWidth;
+
+    // Parse points to get centroid for matching
+    const parsedPoints = parsePointsAttribute(points);
+    const centroid = computeCentroid(parsedPoints);
+
+    polygons.push({
+      element: polygon,
+      points: points,
+      parsedPoints: parsedPoints,
+      centroid: centroid,
+      clipPath: clipPath,
+      stroke: stroke,
+      fill: fill,
+      strokeWidth: strokeWidth,
+      elementType: 'polygon'
+    });
+  }
+
+  return polygons;
+}
+
+function matchSvgPolygons(fromPolygons, toPolygons) {
+  const matches = [];
+
+  // Group polygons by their visual characteristics
+  const fromByType = groupPolygonsByType(fromPolygons);
+  const toByType = groupPolygonsByType(toPolygons);
+
+  // Match polygons within each type group by centroid position
+  for (const type of Object.keys(fromByType)) {
+    const fromGroup = fromByType[type] || [];
+    const toGroup = toByType[type] || [];
+
+    // Sort by centroid position
+    fromGroup.sort((a, b) => a.centroid.x - b.centroid.x || a.centroid.y - b.centroid.y);
+    toGroup.sort((a, b) => a.centroid.x - b.centroid.x || a.centroid.y - b.centroid.y);
+
+    // Match by position in sorted group
+    const count = Math.min(fromGroup.length, toGroup.length);
+    for (let i = 0; i < count; i++) {
+      const fromPolygon = fromGroup[i];
+      const toPolygon = toGroup[i];
+
+      // Only animate if points differ
+      if (fromPolygon.points !== toPolygon.points) {
+        matches.push({
+          fromPolygon: fromPolygon.element,
+          toPolygon: toPolygon.element
+        });
+      }
+    }
+  }
+
+  return matches;
+}
+
+function groupPolygonsByType(polygons) {
+  const groups = {};
+
+  for (const polygon of polygons) {
+    const signature = createPolygonSignature(polygon);
+
+    if (!groups[signature]) {
+      groups[signature] = [];
+    }
+    groups[signature].push(polygon);
+  }
+
+  return groups;
+}
+
+function createPolygonSignature(polygon) {
+  const parts = [
+    polygon.clipPath || 'none',
+    polygon.fill || 'none',
+    polygon.stroke || 'none',
+    polygon.strokeWidth || '0'
+  ];
+  return parts.join('|');
+}
+
+function animatePolygon(polygonElement, fromPoints, toPoints, duration) {
+  const fromParsed = parsePointsAttribute(fromPoints);
+  const toParsed = parsePointsAttribute(toPoints);
+
+  // Use the longer array length
+  const targetLength = Math.max(fromParsed.length, toParsed.length);
+  const fromNormalized = normalizePointCount(fromParsed, targetLength);
+  const toNormalized = normalizePointCount(toParsed, targetLength);
+
+  const startTime = performance.now();
+
+  function animate(currentTime) {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+
+    // Easing: ease-in-out
+    const eased = progress < 0.5
+      ? 2 * progress * progress
+      : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
+    // Interpolate points
+    const interpolated = interpolatePoints(fromNormalized, toNormalized, eased);
+    const pointsStr = pointsToString(interpolated);
+
+    polygonElement.setAttribute('points', pointsStr);
+
+    if (progress < 1) {
+      requestAnimationFrame(animate);
+    }
+  }
+
+  requestAnimationFrame(animate);
+}
+
+// =============================================================================
+// SHARED POINT UTILITIES (for polyline/polygon)
+// =============================================================================
+
+function parsePointsAttribute(pointsStr) {
+  // Parse SVG points attribute: "x1,y1 x2,y2 x3,y3" or "x1 y1 x2 y2 x3 y3"
+  const points = [];
+  const parts = pointsStr.trim().split(/[\s,]+/);
+
+  for (let i = 0; i < parts.length - 1; i += 2) {
+    points.push({
+      x: parseFloat(parts[i]),
+      y: parseFloat(parts[i + 1])
+    });
+  }
+
+  return points;
+}
+
+function pointsToString(points) {
+  return points.map(p => `${p.x},${p.y}`).join(' ');
+}
+
+function computeCentroid(points) {
+  if (points.length === 0) return { x: 0, y: 0 };
+
+  let sumX = 0, sumY = 0;
+  for (const p of points) {
+    sumX += p.x;
+    sumY += p.y;
+  }
+
+  return {
+    x: sumX / points.length,
+    y: sumY / points.length
+  };
+}
+
+function normalizePointCount(points, targetLength) {
+  if (points.length === targetLength) return points;
+
+  if (points.length === 0) {
+    // Return array of zeros
+    return Array(targetLength).fill({ x: 0, y: 0 });
+  }
+
+  if (points.length > targetLength) {
+    // Downsample: pick evenly spaced points
+    const result = [];
+    for (let i = 0; i < targetLength; i++) {
+      const idx = Math.floor(i * (points.length - 1) / (targetLength - 1));
+      result.push(points[idx]);
+    }
+    return result;
+  }
+
+  // Upsample: interpolate additional points along the path
+  const result = [];
+  const ratio = (points.length - 1) / (targetLength - 1);
+
+  for (let i = 0; i < targetLength; i++) {
+    const srcIdx = i * ratio;
+    const idx1 = Math.floor(srcIdx);
+    const idx2 = Math.min(idx1 + 1, points.length - 1);
+    const t = srcIdx - idx1;
+
+    result.push({
+      x: points[idx1].x + (points[idx2].x - points[idx1].x) * t,
+      y: points[idx1].y + (points[idx2].y - points[idx1].y) * t
+    });
+  }
+
+  return result;
+}
+
+function interpolatePoints(from, to, t) {
+  const result = [];
+  const len = Math.min(from.length, to.length);
+
+  for (let i = 0; i < len; i++) {
+    result.push({
+      x: from[i].x + (to[i].x - from[i].x) * t,
+      y: from[i].y + (to[i].y - from[i].y) * t
+    });
+  }
+
+  return result;
 }
 
 function animatePath(pathElement, fromD, toD, duration) {

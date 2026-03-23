@@ -104,3 +104,69 @@ revealjs-plugins:
 :::
 
 
+## Break
+
+## Polyline (grid) - Wave 1 {.magic-move}
+
+
+::: {.cell}
+::: {.cell-output-display}
+![](example-svgs_files/figure-revealjs/polyline-wave1-1.svg){width=960}
+:::
+:::
+
+
+## Polyline (grid) - Wave 2 {.magic-move}
+
+
+::: {.cell}
+::: {.cell-output-display}
+![](example-svgs_files/figure-revealjs/polyline-wave2-1.svg){width=960}
+:::
+:::
+
+
+## Break
+
+## Polygon (grid) - Triangle {.magic-move}
+
+
+::: {.cell}
+::: {.cell-output-display}
+![](example-svgs_files/figure-revealjs/polygon-triangle-1.svg){width=960}
+:::
+:::
+
+
+## Polygon (grid) - Moved Triangle {.magic-move}
+
+
+::: {.cell}
+::: {.cell-output-display}
+![](example-svgs_files/figure-revealjs/polygon-triangle-moved-1.svg){width=960}
+:::
+:::
+
+
+## Break
+
+## Area Chart - Normal {.magic-move}
+
+
+::: {.cell}
+::: {.cell-output-display}
+![](example-svgs_files/figure-revealjs/area-normal-1.svg){width=960}
+:::
+:::
+
+
+## Area Chart - Shifted {.magic-move}
+
+
+::: {.cell}
+::: {.cell-output-display}
+![](example-svgs_files/figure-revealjs/area-shifted-1.svg){width=960}
+:::
+:::
+
+
