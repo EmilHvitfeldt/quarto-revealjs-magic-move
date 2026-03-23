@@ -1,21 +1,9 @@
 ---
 title: Magic Move Demo
-format:
-  revealjs:
-    width: 1280
-    height: 720
+format: revealjs
 revealjs-plugins:
   - magic-move
-echo: false
-code-line-numbers: false
 ---
-
-## Regular code block
-
-```r
-Year.Release <- game$Year.Release
-counts <- data.frame(table(Year.Release))
-```
 
 ## Magic move example
 
