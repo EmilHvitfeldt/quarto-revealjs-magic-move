@@ -953,11 +953,50 @@ function matchSvgPaths(fromPaths, toPaths) {
           fromPath: fromPath.element,
           toPath: toPath.element
         });
+        usedTo.add(toPaths.indexOf(toPath));
+      }
+    }
+  }
+
+  // Third pass: match remaining paths by fill color only (for shape morphing like bar->pie)
+  // This allows morphing between paths with different structures
+  const remainingFrom = fromPaths.filter(p =>
+    !matches.some(m => m.fromPath === p.element)
+  );
+
+  for (const fromPath of remainingFrom) {
+    // Skip paths without a meaningful fill
+    if (!fromPath.fill || fromPath.fill === 'none') continue;
+
+    for (let i = 0; i < toPaths.length; i++) {
+      if (usedTo.has(i)) continue;
+
+      const toPath = toPaths[i];
+
+      // Match by fill color (normalized comparison)
+      const sameFill = normalizeColor(fromPath.fill) === normalizeColor(toPath.fill);
+      const differentD = fromPath.d !== toPath.d;
+
+      if (sameFill && differentD) {
+        matches.push({
+          fromPath: fromPath.element,
+          toPath: toPath.element,
+          needsNormalization: fromPath.pathType !== toPath.pathType
+        });
+        usedTo.add(i);
+        break;
       }
     }
   }
 
   return matches;
+}
+
+function normalizeColor(color) {
+  // Normalize color strings for comparison
+  if (!color) return '';
+  // Remove spaces and convert to lowercase
+  return color.replace(/\s+/g, '').toLowerCase();
 }
 
 function groupPathsByType(paths) {
@@ -2083,12 +2122,22 @@ function animatePath(pathElement, fromD, toD, duration) {
   const fromCoords = parsePathCoordinates(fromD);
   const toCoords = parsePathCoordinates(toD);
 
-  if (!fromCoords || !toCoords || fromCoords.length !== toCoords.length) {
-    // Can't interpolate, just set final value
-    pathElement.setAttribute('d', toD);
-    return;
-  }
+  // Check if paths have compatible structure
+  const compatible = fromCoords && toCoords &&
+    fromCoords.length === toCoords.length &&
+    fromCoords.every((cmd, i) => cmd.command.toUpperCase() === toCoords[i].command.toUpperCase() &&
+                                  cmd.coords.length === toCoords[i].coords.length);
 
+  if (compatible) {
+    // Standard animation for compatible paths
+    animateCompatiblePaths(pathElement, fromCoords, toCoords, duration);
+  } else {
+    // For incompatible paths (like bar->pie), sample to points and morph
+    animateIncompatiblePaths(pathElement, fromD, toD, duration);
+  }
+}
+
+function animateCompatiblePaths(pathElement, fromCoords, toCoords, duration) {
   const startTime = performance.now();
 
   function animate(currentTime) {
@@ -2113,6 +2162,87 @@ function animatePath(pathElement, fromD, toD, duration) {
   }
 
   requestAnimationFrame(animate);
+}
+
+function animateIncompatiblePaths(pathElement, fromD, toD, duration) {
+  // Convert paths to point arrays by sampling
+  const numSamples = 100;
+  const fromPoints = samplePathToPoints(fromD, numSamples);
+  const toPoints = samplePathToPoints(toD, numSamples);
+
+  if (!fromPoints || !toPoints) {
+    // Fallback: just set final value
+    pathElement.setAttribute('d', toD);
+    return;
+  }
+
+  const startTime = performance.now();
+
+  function animate(currentTime) {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+
+    // Easing: ease-in-out
+    const eased = progress < 0.5
+      ? 2 * progress * progress
+      : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
+    // Interpolate points
+    const interpolated = [];
+    for (let i = 0; i < fromPoints.length; i++) {
+      interpolated.push({
+        x: fromPoints[i].x + (toPoints[i].x - fromPoints[i].x) * eased,
+        y: fromPoints[i].y + (toPoints[i].y - fromPoints[i].y) * eased
+      });
+    }
+
+    // Convert points back to path
+    const newD = pointsToPath(interpolated);
+    pathElement.setAttribute('d', newD);
+
+    if (progress < 1) {
+      requestAnimationFrame(animate);
+    }
+  }
+
+  requestAnimationFrame(animate);
+}
+
+function samplePathToPoints(d, numSamples) {
+  // Create a temporary SVG path to sample points
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('d', d);
+  svg.appendChild(path);
+  document.body.appendChild(svg);
+
+  const points = [];
+  try {
+    const totalLength = path.getTotalLength();
+    if (totalLength === 0) return null;
+
+    for (let i = 0; i < numSamples; i++) {
+      const distance = (i / (numSamples - 1)) * totalLength;
+      const point = path.getPointAtLength(distance);
+      points.push({ x: point.x, y: point.y });
+    }
+  } finally {
+    document.body.removeChild(svg);
+  }
+
+  return points;
+}
+
+function pointsToPath(points) {
+  if (points.length === 0) return '';
+
+  let d = `M ${points[0].x} ${points[0].y}`;
+  for (let i = 1; i < points.length; i++) {
+    d += ` L ${points[i].x} ${points[i].y}`;
+  }
+  d += ' Z';
+
+  return d;
 }
 
 function parsePathCoordinates(d) {

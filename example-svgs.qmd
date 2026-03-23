@@ -344,3 +344,44 @@ data.frame(
   theme_minimal(base_size = 16) +
   lims(x = c(0, 4), y = c(0, 5))
 ```
+
+## Break
+
+## Bar Chart {.magic-move}
+
+```{r}
+#| label: "bar-chart"
+#| dev: svg
+library(ggplot2)
+data.frame(
+  category = factor(c("A", "B", "C", "D"), levels = c("A", "B", "C", "D")),
+  value = c(25, 40, 20, 15)
+) |>
+  ggplot(aes(x = category, y = value, fill = category)) +
+  geom_col(width = 0.9) +
+  scale_fill_brewer(palette = "Set2") +
+  theme_minimal(base_size = 16) +
+  theme(legend.position = "none") +
+  labs(x = NULL, y = NULL)
+```
+
+## Pie Chart {.magic-move}
+
+```{r}
+#| label: "pie-chart"
+#| dev: svg
+library(ggplot2)
+data.frame(
+  category = factor(c("A", "B", "C", "D"), levels = c("A", "B", "C", "D")),
+  value = c(25, 40, 20, 15)
+) |>
+  ggplot(aes(x = category, y = value, fill = category)) +
+  geom_col() +
+  scale_fill_brewer(palette = "Set2") +
+  coord_radial(theta = "x", expand = FALSE, inner.radius = 0.1) +
+  theme_minimal(base_size = 16) +
+  theme(legend.position = "none") +
+  labs(x = NULL, y = NULL)
+```
+
+
