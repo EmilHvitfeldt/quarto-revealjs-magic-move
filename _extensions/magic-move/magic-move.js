@@ -193,9 +193,10 @@ function animateSlideMagicMove(fromSlide, toSlide, fromStep, toStep, overlay, de
   const toSpanData = [];
   for (const token of toTokens) {
     const rect = getTokenRect(token);
-    const computedStyle = token.type === 'span'
+    const computed = token.type === 'span'
       ? window.getComputedStyle(token.node)
       : window.getComputedStyle(token.node.parentElement);
+    // Capture style VALUES (not live reference) since we'll modify styles later
     toSpanData.push({
       node: token.node,
       content: token.content,
@@ -204,7 +205,15 @@ function animateSlideMagicMove(fromSlide, toSlide, fromStep, toStep, overlay, de
       y: rect.top,
       width: rect.width,
       height: rect.height,
-      computedStyle: computedStyle
+      styles: {
+        fontFamily: computed.fontFamily,
+        fontSize: computed.fontSize,
+        lineHeight: computed.lineHeight,
+        letterSpacing: computed.letterSpacing,
+        color: computed.color,
+        fontWeight: computed.fontWeight,
+        fontStyle: computed.fontStyle
+      }
     });
   }
 
@@ -242,8 +251,13 @@ function animateSlideMagicMove(fromSlide, toSlide, fromStep, toStep, overlay, de
   toPre.style.transition = 'height 0.5s ease-in-out';
   toPre.style.height = `${toPreNaturalHeight}px`;
 
-  // Hide the target code block temporarily
-  toCodeBlock.style.visibility = 'hidden';
+  // Make the code text transparent (but keep structure for line numbers)
+  toCodeBlock.style.color = 'transparent';
+  // Also hide any syntax-highlighted spans
+  const codeSpans = toCodeBlock.querySelectorAll('span');
+  for (const span of codeSpans) {
+    span.style.color = 'transparent';
+  }
 
   // Get reveal.js scale factor for font size adjustment
   const slidesContainer = document.querySelector('.reveal .slides');
@@ -264,8 +278,8 @@ function animateSlideMagicMove(fromSlide, toSlide, fromStep, toStep, overlay, de
     const clone = document.createElement('span');
     clone.textContent = toData.content;
 
-    // Copy computed styles from target span
-    const computed = toData.computedStyle;
+    // Use captured style values (not live reference)
+    const styles = toData.styles;
 
     // Starting position: from position if matched, to position if new
     const startX = hasMatch ? fromData.x : toData.x;
@@ -273,20 +287,20 @@ function animateSlideMagicMove(fromSlide, toSlide, fromStep, toStep, overlay, de
     const startOpacity = hasMatch ? 1 : 0;
 
     // Scale font size to match visual rendering (reveal.js uses CSS transforms)
-    const fontSize = parseFloat(computed.fontSize) * scale;
-    const lineHeight = parseFloat(computed.lineHeight) * scale;
+    const fontSize = parseFloat(styles.fontSize) * scale;
+    const lineHeight = parseFloat(styles.lineHeight) * scale;
 
     clone.style.cssText = `
       position: fixed;
       left: ${startX}px;
       top: ${startY}px;
-      font-family: ${computed.fontFamily};
+      font-family: ${styles.fontFamily};
       font-size: ${fontSize}px;
       line-height: ${isNaN(lineHeight) ? 'normal' : lineHeight + 'px'};
-      letter-spacing: ${computed.letterSpacing};
-      color: ${computed.color};
-      font-weight: ${computed.fontWeight};
-      font-style: ${computed.fontStyle};
+      letter-spacing: ${styles.letterSpacing};
+      color: ${styles.color};
+      font-weight: ${styles.fontWeight};
+      font-style: ${styles.fontStyle};
       white-space: pre;
       pointer-events: none;
       opacity: ${startOpacity};
@@ -311,8 +325,11 @@ function animateSlideMagicMove(fromSlide, toSlide, fromStep, toStep, overlay, de
 
   // Clean up after animation
   setTimeout(() => {
-    // Show the target code block
-    toCodeBlock.style.visibility = 'visible';
+    // Restore code text colors
+    toCodeBlock.style.color = '';
+    for (const span of codeSpans) {
+      span.style.color = '';
+    }
 
     // Reset height styles on toPre
     toPre.style.height = '';
