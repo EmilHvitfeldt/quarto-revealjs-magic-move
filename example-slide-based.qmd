@@ -1,0 +1,81 @@
+---
+title: Slide-Based Magic Move Demo
+format: revealjs
+revealjs-plugins:
+  - magic-move
+---
+
+## Introduction
+
+This demo shows slide-based magic move where consecutive slides with the `.magic-move` class animate between each other.
+
+## Step 1 {.magic-move}
+
+```r
+Year.Release <- game$Year.Release
+counts <- data.frame(table(Year.Release))
+```
+
+## Step 2 {.magic-move}
+
+```r
+Year.Release <- game$Year.Release
+counts <- data.frame(
+  table(Year.Release)
+)
+```
+
+## Step 3 {.magic-move}
+
+```r
+Year.Release <- game$Year.Release
+counts <- data.frame(
+  table(Year.Release)
+)
+p <- game %>%
+  select(Year.Release, Global.Sales)
+```
+
+## Step 4 {.magic-move}
+
+```r
+Year.Release <- game$Year.Release
+counts <- data.frame(
+  table(Year.Release)
+)
+p <- game %>%
+  select(Year.Release, Global.Sales) %>%
+  group_by(Year.Release) %>%
+  summarise(Total.Sales = sum(Global.Sales))
+```
+
+## Break
+
+This is a normal slide without magic-move.
+
+It breaks the sequence.
+
+## Another sequence {.magic-move}
+
+```javascript
+const x = 1
+```
+
+## Continued {.magic-move}
+
+```javascript
+const x = 1
+const y = 2
+```
+
+## Final {.magic-move}
+
+```javascript
+const x = 1
+const y = 2
+const z = x + y
+```
+
+## End
+
+That's all folks!

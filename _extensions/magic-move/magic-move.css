@@ -52,3 +52,13 @@
     opacity: 0;
   }
 }
+
+/* Slide-based magic move */
+.magic-move-slide-overlay span {
+  display: inline-block;
+}
+
+/* Entering animation for slide-based magic move */
+section.magic-move pre code span[data-entering] {
+  animation: magic-enter 0.5s ease-in-out;
+}

@@ -185,13 +185,13 @@ Alternative approach: animate between code blocks on different slides instead of
 
 Example syntax:
 ```markdown
-## Step 1 {.magic-move-from}
+## Step 1 {.magic-move}
 
 ```r
 x <- 1
 ```
 
-## Step 2 {.magic-move-to}
+## Step 2 {.magic-move}
 
 ```r
 x <- 1
