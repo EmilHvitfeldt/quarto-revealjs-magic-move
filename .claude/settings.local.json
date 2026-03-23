@@ -7,7 +7,8 @@
       "WebFetch(domain:cdn.jsdelivr.net)",
       "WebFetch(domain:shiki.style)",
       "Bash(ls:*)",
-      "WebFetch(domain:quarto.org)"
+      "WebFetch(domain:quarto.org)",
+      "Bash(quarto render:*)"
     ]
   }
 }

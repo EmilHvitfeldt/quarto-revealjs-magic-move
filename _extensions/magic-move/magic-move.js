@@ -161,8 +161,9 @@ function animateSlideMagicMove(fromSlide, toSlide, fromStep, toStep, overlay, de
   fromSlide.style.visibility = 'visible';
   fromSlide.style.opacity = '0';
 
-  // Capture the height of the from code block
-  const fromPreHeight = fromPre.getBoundingClientRect().height;
+  // Capture the height of the from code block's sourceCode div
+  const fromSourceCodeDiv = fromPre.closest('.sourceCode') || fromPre.parentElement;
+  const fromHeight = fromSourceCodeDiv.getBoundingClientRect().height;
 
   // Get all tokens from the "from" code block and record their positions
   const fromTokens = getCodeTokens(fromCodeBlock);
@@ -236,20 +237,33 @@ function animateSlideMagicMove(fromSlide, toSlide, fromStep, toStep, overlay, de
     }
   }
 
-  // Capture the natural height of the to code block
-  const toPreNaturalHeight = toPre.getBoundingClientRect().height;
+  // Capture the natural height of the to code block's sourceCode div
+  const toSourceCodeDiv = toPre.closest('.sourceCode') || toPre.parentElement;
+  const toHeightMeasured = toSourceCodeDiv.getBoundingClientRect().height;
 
-  // Set up height animation: start at fromHeight, animate to toHeight
-  toPre.style.height = `${fromPreHeight}px`;
-  toPre.style.overflow = 'hidden';
-  toPre.style.transition = 'none';
+  // Get reveal.js scale factor - measurements are in screen pixels but CSS needs unscaled values
+  const slidesContainer = document.querySelector('.reveal .slides');
+  const slidesTransform = window.getComputedStyle(slidesContainer).transform;
+  let scale = 1;
+  if (slidesTransform && slidesTransform !== 'none') {
+    const matrix = new DOMMatrix(slidesTransform);
+    scale = matrix.a;
+  }
 
-  // Force reflow to apply initial height
-  toPre.offsetHeight;
+  // Convert screen pixels to CSS pixels by dividing by scale
+  const fromHeightCSS = fromHeight / scale;
+  const toHeightCSS = toHeightMeasured / scale;
 
-  // Now enable transition and set target height
-  toPre.style.transition = 'height 0.5s ease-in-out';
-  toPre.style.height = `${toPreNaturalHeight}px`;
+  // Animate height using the sourceCode div
+  // Set initial height to match the from slide
+  toSourceCodeDiv.style.height = `${fromHeightCSS}px`;
+  toSourceCodeDiv.style.overflow = 'hidden';
+  toSourceCodeDiv.style.transition = 'height 0.5s ease-in-out';
+
+  // Use requestAnimationFrame to ensure layout is complete before animating
+  requestAnimationFrame(() => {
+    toSourceCodeDiv.style.height = `${toHeightCSS}px`;
+  });
 
   // Make the code text transparent (but keep structure for line numbers)
   toCodeBlock.style.color = 'transparent';
@@ -257,15 +271,6 @@ function animateSlideMagicMove(fromSlide, toSlide, fromStep, toStep, overlay, de
   const codeSpans = toCodeBlock.querySelectorAll('span');
   for (const span of codeSpans) {
     span.style.color = 'transparent';
-  }
-
-  // Get reveal.js scale factor for font size adjustment
-  const slidesContainer = document.querySelector('.reveal .slides');
-  const slidesTransform = window.getComputedStyle(slidesContainer).transform;
-  let scale = 1;
-  if (slidesTransform && slidesTransform !== 'none') {
-    const matrix = new DOMMatrix(slidesTransform);
-    scale = matrix.a;
   }
 
   // Create animated clones in the overlay for ALL "to" spans
@@ -304,7 +309,6 @@ function animateSlideMagicMove(fromSlide, toSlide, fromStep, toStep, overlay, de
       white-space: pre;
       pointer-events: none;
       opacity: ${startOpacity};
-      transition: left 0.5s ease-in-out, top 0.5s ease-in-out, opacity 0.5s ease-in-out;
     `;
 
     overlay.appendChild(clone);
@@ -314,16 +318,29 @@ function animateSlideMagicMove(fromSlide, toSlide, fromStep, toStep, overlay, de
   // Force reflow
   overlay.offsetHeight;
 
-  // Animate to final positions
-  for (const { clone, toData, hasMatch } of clones) {
-    clone.style.left = `${toData.x}px`;
-    clone.style.top = `${toData.y}px`;
-    if (!hasMatch) {
-      clone.style.opacity = '1';
-    }
-  }
+  // Delay token animation to let height expand first
+  const heightAnimationDelay = 250; // ms
 
-  // Clean up after animation
+  setTimeout(() => {
+    // Add transitions to clones
+    for (const { clone } of clones) {
+      clone.style.transition = 'left 0.5s ease-in-out, top 0.5s ease-in-out, opacity 0.5s ease-in-out';
+    }
+
+    // Force reflow
+    overlay.offsetHeight;
+
+    // Animate to final positions
+    for (const { clone, toData, hasMatch } of clones) {
+      clone.style.left = `${toData.x}px`;
+      clone.style.top = `${toData.y}px`;
+      if (!hasMatch) {
+        clone.style.opacity = '1';
+      }
+    }
+  }, heightAnimationDelay);
+
+  // Clean up after both animations complete
   setTimeout(() => {
     // Restore code text colors
     toCodeBlock.style.color = '';
@@ -331,18 +348,19 @@ function animateSlideMagicMove(fromSlide, toSlide, fromStep, toStep, overlay, de
       span.style.color = '';
     }
 
-    // Reset height styles on toPre
-    toPre.style.height = '';
-    toPre.style.overflow = '';
-    toPre.style.transition = '';
 
     // Remove clones
     for (const { clone } of clones) {
       clone.remove();
     }
 
+    // Reset sourceCodeDiv styles
+    toSourceCodeDiv.style.height = '';
+    toSourceCodeDiv.style.overflow = '';
+    toSourceCodeDiv.style.transition = '';
+
     onComplete();
-  }, 550); // Slightly longer than animation duration
+  }, heightAnimationDelay + 550); // Height delay + token animation duration
 }
 
 // Get bounding rect for a token (handles partial text nodes)
