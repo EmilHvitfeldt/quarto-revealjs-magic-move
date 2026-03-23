@@ -5,7 +5,9 @@
       "WebFetch(domain:www.npmjs.com)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "WebFetch(domain:cdn.jsdelivr.net)",
-      "WebFetch(domain:shiki.style)"
+      "WebFetch(domain:shiki.style)",
+      "Bash(ls:*)",
+      "WebFetch(domain:quarto.org)"
     ]
   }
 }

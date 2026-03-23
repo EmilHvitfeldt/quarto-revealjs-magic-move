@@ -1,0 +1,67 @@
+---
+title: Magic Move Demo
+format:
+  revealjs:
+    width: 1280
+    height: 720
+revealjs-plugins:
+  - magic-move
+echo: false
+code-line-numbers: false
+---
+
+## Regular code block
+
+```r
+Year.Release <- game$Year.Release
+counts <- data.frame(table(Year.Release))
+```
+
+## Magic move example
+
+::: magic-move
+
+```r
+Year.Release <- game$Year.Release
+counts <- data.frame(table(Year.Release))
+```
+
+```r
+Year.Release <- game$Year.Release
+counts <- data.frame(
+  table(Year.Release)
+)
+p <- game %>%
+  select(Year.Release, Global.Sales)
+```
+
+```r
+Year.Release <- game$Year.Release
+counts <- data.frame(
+  table(Year.Release)
+)
+p <- game %>%
+  select(Year.Release, Global.Sales) %>%
+  group_by(Year.Release) %>%
+  summarise(Total.Sales = sum(Global.Sales))
+```
+
+:::
+
+## Another example
+
+::: magic-move
+
+```javascript
+if (condition) a else b
+```
+
+```javascript
+if (condition) {
+  a
+} else {
+  b
+}
+```
+
+:::
