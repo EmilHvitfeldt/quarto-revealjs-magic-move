@@ -610,6 +610,10 @@ function animateSvgMagicMove(fromSlide, toSlide, fromSvg, toSvg, deck, onComplet
   const toPolylines = parseSvgPolylines(toSvg);
   const fromPolygons = parseSvgPolygons(fromSvg);
   const toPolygons = parseSvgPolygons(toSvg);
+  const fromEllipses = parseSvgEllipses(fromSvg);
+  const toEllipses = parseSvgEllipses(toSvg);
+  const fromTexts = parseSvgTexts(fromSvg);
+  const toTexts = parseSvgTexts(toSvg);
 
   // Match elements between SVGs
   const pathMatches = matchSvgPaths(fromPaths, toPaths);
@@ -618,10 +622,13 @@ function animateSvgMagicMove(fromSlide, toSlide, fromSvg, toSvg, deck, onComplet
   const lineMatches = matchSvgLines(fromLines, toLines);
   const polylineMatches = matchSvgPolylines(fromPolylines, toPolylines);
   const polygonMatches = matchSvgPolygons(fromPolygons, toPolygons);
+  const ellipseMatches = matchSvgEllipses(fromEllipses, toEllipses);
+  const textMatches = matchSvgTexts(fromTexts, toTexts);
 
   if (pathMatches.length === 0 && rectMatches.length === 0 &&
       circleMatches.length === 0 && lineMatches.length === 0 &&
-      polylineMatches.length === 0 && polygonMatches.length === 0) {
+      polylineMatches.length === 0 && polygonMatches.length === 0 &&
+      ellipseMatches.length === 0 && textMatches.length === 0) {
     onComplete();
     return;
   }
@@ -672,6 +679,17 @@ function animateSvgMagicMove(fromSlide, toSlide, fromSvg, toSvg, deck, onComplet
   for (const match of polygonMatches) {
     match.fromPoints = match.fromPolygon.getAttribute('points');
   }
+
+  // Capture "from" ellipse data
+  for (const match of ellipseMatches) {
+    match.fromCx = parseFloat(match.fromEllipse.getAttribute('cx'));
+    match.fromCy = parseFloat(match.fromEllipse.getAttribute('cy'));
+    match.fromRx = parseFloat(match.fromEllipse.getAttribute('rx'));
+    match.fromRy = parseFloat(match.fromEllipse.getAttribute('ry'));
+  }
+
+  // Text data is already captured in the match objects from parseSvgTexts
+  // (match.fromText and match.toText contain all needed data)
 
   // Restore fromSlide
   fromSlide.style.display = fromSlideOriginalDisplay;
@@ -743,6 +761,23 @@ function animateSvgMagicMove(fromSlide, toSlide, fromSvg, toSvg, deck, onComplet
     match.toPolygon.setAttribute('points', match.fromPoints);
   }
 
+  // Capture "to" ellipse data and set up animation
+  for (const match of ellipseMatches) {
+    match.toCx = parseFloat(match.toEllipse.getAttribute('cx'));
+    match.toCy = parseFloat(match.toEllipse.getAttribute('cy'));
+    match.toRx = parseFloat(match.toEllipse.getAttribute('rx'));
+    match.toRy = parseFloat(match.toEllipse.getAttribute('ry'));
+
+    // Set the "to" ellipse to start at the "from" position
+    match.toEllipse.setAttribute('cx', match.fromCx);
+    match.toEllipse.setAttribute('cy', match.fromCy);
+    match.toEllipse.setAttribute('rx', match.fromRx);
+    match.toEllipse.setAttribute('ry', match.fromRy);
+  }
+
+  // Text animation setup is handled in animateText function
+  // since it needs to work with groups of <use> elements
+
   // Force reflow
   toSvg.getBoundingClientRect();
 
@@ -765,6 +800,12 @@ function animateSvgMagicMove(fromSlide, toSlide, fromSvg, toSvg, deck, onComplet
     }
     for (const match of polygonMatches) {
       animatePolygon(match.toPolygon, match.fromPoints, match.toPoints, 500);
+    }
+    for (const match of ellipseMatches) {
+      animateEllipse(match.toEllipse, match, 500);
+    }
+    for (const match of textMatches) {
+      animateText(match.toText.element, match, 500);
     }
   });
 
@@ -1619,6 +1660,326 @@ function animatePolygon(polygonElement, fromPoints, toPoints, duration) {
     const pointsStr = pointsToString(interpolated);
 
     polygonElement.setAttribute('points', pointsStr);
+
+    if (progress < 1) {
+      requestAnimationFrame(animate);
+    }
+  }
+
+  requestAnimationFrame(animate);
+}
+
+// =============================================================================
+// ELLIPSE SUPPORT
+// =============================================================================
+
+function parseSvgEllipses(svg) {
+  const ellipses = [];
+
+  const ellipseElements = svg.querySelectorAll('ellipse');
+
+  for (const ellipse of ellipseElements) {
+    const cx = ellipse.getAttribute('cx');
+    const cy = ellipse.getAttribute('cy');
+    const rx = ellipse.getAttribute('rx');
+    const ry = ellipse.getAttribute('ry');
+
+    if (!cx || !cy || !rx || !ry) continue;
+
+    // Get parent clip-path for identification
+    const parent = ellipse.closest('g[clip-path]');
+    const clipPath = parent ? parent.getAttribute('clip-path') : null;
+
+    // Get stroke/fill properties for matching
+    const stroke = ellipse.getAttribute('stroke') ||
+                   window.getComputedStyle(ellipse).stroke;
+    const fill = ellipse.getAttribute('fill') ||
+                 window.getComputedStyle(ellipse).fill;
+    const strokeWidth = ellipse.getAttribute('stroke-width') ||
+                        window.getComputedStyle(ellipse).strokeWidth;
+
+    ellipses.push({
+      element: ellipse,
+      cx: parseFloat(cx),
+      cy: parseFloat(cy),
+      rx: parseFloat(rx),
+      ry: parseFloat(ry),
+      clipPath: clipPath,
+      stroke: stroke,
+      fill: fill,
+      strokeWidth: strokeWidth,
+      elementType: 'ellipse'
+    });
+  }
+
+  return ellipses;
+}
+
+function matchSvgEllipses(fromEllipses, toEllipses) {
+  const matches = [];
+
+  // Group ellipses by their visual characteristics
+  const fromByType = groupEllipsesByType(fromEllipses);
+  const toByType = groupEllipsesByType(toEllipses);
+
+  // Match ellipses within each type group by position
+  for (const type of Object.keys(fromByType)) {
+    const fromGroup = fromByType[type] || [];
+    const toGroup = toByType[type] || [];
+
+    // Sort by position (cx first, then cy)
+    fromGroup.sort((a, b) => a.cx - b.cx || a.cy - b.cy);
+    toGroup.sort((a, b) => a.cx - b.cx || a.cy - b.cy);
+
+    // Match by position in sorted group
+    const count = Math.min(fromGroup.length, toGroup.length);
+    for (let i = 0; i < count; i++) {
+      const fromEllipse = fromGroup[i];
+      const toEllipse = toGroup[i];
+
+      // Only animate if something differs
+      const differs = fromEllipse.cx !== toEllipse.cx ||
+                      fromEllipse.cy !== toEllipse.cy ||
+                      fromEllipse.rx !== toEllipse.rx ||
+                      fromEllipse.ry !== toEllipse.ry;
+
+      if (differs) {
+        matches.push({
+          fromEllipse: fromEllipse.element,
+          toEllipse: toEllipse.element
+        });
+      }
+    }
+  }
+
+  return matches;
+}
+
+function groupEllipsesByType(ellipses) {
+  const groups = {};
+
+  for (const ellipse of ellipses) {
+    const signature = createEllipseSignature(ellipse);
+
+    if (!groups[signature]) {
+      groups[signature] = [];
+    }
+    groups[signature].push(ellipse);
+  }
+
+  return groups;
+}
+
+function createEllipseSignature(ellipse) {
+  const parts = [
+    ellipse.clipPath || 'none',
+    ellipse.fill || 'none',
+    ellipse.stroke || 'none',
+    ellipse.strokeWidth || '0'
+  ];
+  return parts.join('|');
+}
+
+function animateEllipse(ellipseElement, match, duration) {
+  const startTime = performance.now();
+
+  const fromCx = match.fromCx;
+  const fromCy = match.fromCy;
+  const fromRx = match.fromRx;
+  const fromRy = match.fromRy;
+  const toCx = match.toCx;
+  const toCy = match.toCy;
+  const toRx = match.toRx;
+  const toRy = match.toRy;
+
+  function animate(currentTime) {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+
+    // Easing: ease-in-out
+    const eased = progress < 0.5
+      ? 2 * progress * progress
+      : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
+    // Interpolate attributes
+    const cx = fromCx + (toCx - fromCx) * eased;
+    const cy = fromCy + (toCy - fromCy) * eased;
+    const rx = fromRx + (toRx - fromRx) * eased;
+    const ry = fromRy + (toRy - fromRy) * eased;
+
+    ellipseElement.setAttribute('cx', cx);
+    ellipseElement.setAttribute('cy', cy);
+    ellipseElement.setAttribute('rx', rx);
+    ellipseElement.setAttribute('ry', ry);
+
+    if (progress < 1) {
+      requestAnimationFrame(animate);
+    }
+  }
+
+  requestAnimationFrame(animate);
+}
+
+// =============================================================================
+// TEXT SUPPORT (handles <use> elements - R's SVG text rendering)
+// =============================================================================
+
+function parseSvgTexts(svg) {
+  const texts = [];
+
+  // R's SVG device renders text as <use> elements inside <g> groups
+  // Each <g> contains <use> elements for each character
+  // We'll treat each <g> with <use> children as a text group
+
+  const useGroups = svg.querySelectorAll('g[fill]');
+
+  for (const group of useGroups) {
+    const useElements = group.querySelectorAll('use');
+    if (useElements.length === 0) continue;
+
+    // Get the first use element's position as the group position
+    const firstUse = useElements[0];
+    const x = parseFloat(firstUse.getAttribute('x')) || 0;
+    const y = parseFloat(firstUse.getAttribute('y')) || 0;
+
+    // Get fill from the group
+    const fill = group.getAttribute('fill') || '';
+
+    // Create a signature from the glyph references (to match same text)
+    const glyphSignature = Array.from(useElements)
+      .map(u => u.getAttribute('xlink:href') || u.getAttribute('href') || '')
+      .join(',');
+
+    // Get parent clip-path for identification
+    const clipParent = group.closest('g[clip-path]');
+    const clipPath = clipParent ? clipParent.getAttribute('clip-path') : null;
+
+    texts.push({
+      element: group,
+      useElements: Array.from(useElements),
+      x: x,
+      y: y,
+      glyphSignature: glyphSignature,
+      clipPath: clipPath,
+      fill: fill,
+      elementType: 'textGroup'
+    });
+  }
+
+  return texts;
+}
+
+function matchSvgTexts(fromTexts, toTexts) {
+  const matches = [];
+  const usedTo = new Set();
+
+  // First pass: match by glyph signature (same text content) and fill color
+  for (const fromText of fromTexts) {
+    for (let i = 0; i < toTexts.length; i++) {
+      if (usedTo.has(i)) continue;
+
+      const toText = toTexts[i];
+
+      // Match by glyph signature (same characters) and fill color
+      if (fromText.glyphSignature === toText.glyphSignature &&
+          fromText.fill === toText.fill) {
+        // Only animate if position differs
+        const differs = fromText.x !== toText.x || fromText.y !== toText.y;
+
+        if (differs) {
+          matches.push({
+            fromText: fromText,
+            toText: toText
+          });
+        }
+        usedTo.add(i);
+        break;
+      }
+    }
+  }
+
+  // Second pass: match by fill color and position proximity (different text)
+  for (const fromText of fromTexts) {
+    if (matches.some(m => m.fromText === fromText)) continue;
+
+    let bestMatch = null;
+    let bestDistance = Infinity;
+
+    for (let i = 0; i < toTexts.length; i++) {
+      if (usedTo.has(i)) continue;
+
+      const toText = toTexts[i];
+
+      // Must have same fill color
+      if (fromText.fill !== toText.fill) continue;
+
+      // Calculate position distance
+      const dx = fromText.x - toText.x;
+      const dy = fromText.y - toText.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      // Allow matching if reasonably close
+      if (distance < 200 && distance < bestDistance) {
+        bestDistance = distance;
+        bestMatch = { text: toText, index: i };
+      }
+    }
+
+    if (bestMatch) {
+      matches.push({
+        fromText: fromText,
+        toText: bestMatch.text
+      });
+      usedTo.add(bestMatch.index);
+    }
+  }
+
+  return matches;
+}
+
+function animateText(toTextGroup, match, duration) {
+  // For R's SVG text (groups of <use> elements), we animate by
+  // adjusting the x/y positions of each <use> element
+
+  const fromUseElements = match.fromText.useElements;
+  const toUseElements = match.toText.useElements;
+
+  if (!fromUseElements || !toUseElements) return;
+
+  // Calculate the delta to apply to each use element
+  const deltaX = match.fromText.x - match.toText.x;
+  const deltaY = match.fromText.y - match.toText.y;
+
+  // Store original positions of "to" use elements
+  const originalPositions = toUseElements.map(use => ({
+    x: parseFloat(use.getAttribute('x')) || 0,
+    y: parseFloat(use.getAttribute('y')) || 0
+  }));
+
+  // Set initial positions (from positions)
+  for (let i = 0; i < toUseElements.length; i++) {
+    toUseElements[i].setAttribute('x', originalPositions[i].x + deltaX);
+    toUseElements[i].setAttribute('y', originalPositions[i].y + deltaY);
+  }
+
+  const startTime = performance.now();
+
+  function animate(currentTime) {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+
+    // Easing: ease-in-out
+    const eased = progress < 0.5
+      ? 2 * progress * progress
+      : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
+    // Interpolate each use element's position
+    for (let i = 0; i < toUseElements.length; i++) {
+      const x = originalPositions[i].x + deltaX * (1 - eased);
+      const y = originalPositions[i].y + deltaY * (1 - eased);
+      toUseElements[i].setAttribute('x', x);
+      toUseElements[i].setAttribute('y', y);
+    }
 
     if (progress < 1) {
       requestAnimationFrame(animate);

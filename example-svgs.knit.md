@@ -170,3 +170,69 @@ revealjs-plugins:
 :::
 
 
+## Break
+
+## Ellipse (polygon) - Wide {.magic-move}
+
+
+::: {.cell}
+::: {.cell-output-display}
+![](example-svgs_files/figure-revealjs/ellipse-wide-1.svg){width=960}
+:::
+:::
+
+
+## Ellipse (polygon) - Tall {.magic-move}
+
+
+::: {.cell}
+::: {.cell-output-display}
+![](example-svgs_files/figure-revealjs/ellipse-tall-1.svg){width=960}
+:::
+:::
+
+
+## Break
+
+## Text (grid) - Position 1 {.magic-move}
+
+
+::: {.cell}
+::: {.cell-output-display}
+![](example-svgs_files/figure-revealjs/text-pos1-1.svg){width=960}
+:::
+:::
+
+
+## Text (grid) - Position 2 {.magic-move}
+
+
+::: {.cell}
+::: {.cell-output-display}
+![](example-svgs_files/figure-revealjs/text-pos2-1.svg){width=960}
+:::
+:::
+
+
+## Break
+
+## Text Labels (ggplot2) - Before {.magic-move}
+
+
+::: {.cell}
+::: {.cell-output-display}
+![](example-svgs_files/figure-revealjs/text-ggplot-before-1.svg){width=960}
+:::
+:::
+
+
+## Text Labels (ggplot2) - After {.magic-move}
+
+
+::: {.cell}
+::: {.cell-output-display}
+![](example-svgs_files/figure-revealjs/text-ggplot-after-1.svg){width=960}
+:::
+:::
+
+
