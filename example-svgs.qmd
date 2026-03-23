@@ -80,3 +80,73 @@ data.frame(x = rnorm(1000, mean = 2, sd = 1)) |>
   theme_minimal(base_size = 16) +
   lims(x = c(-5, 5), y = c(0, 200))
 ```
+
+## Break
+
+## Line Segments - Position 1 {.magic-move}
+
+```{r}
+#| label: "segments-1"
+#| dev: svg
+library(ggplot2)
+data.frame(
+  x = c(1, 2, 3, 4),
+  xend = c(2, 3, 4, 5),
+  y = c(1, 2, 1, 2),
+  yend = c(2, 1, 2, 1)
+) |>
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_segment(linewidth = 3, color = "coral") +
+  theme_minimal(base_size = 16) +
+  lims(x = c(0, 6), y = c(0, 4))
+```
+
+## Line Segments - Position 2 {.magic-move}
+
+```{r}
+#| label: "segments-2"
+#| dev: svg
+library(ggplot2)
+data.frame(
+  x = c(1, 2, 3, 4),
+  xend = c(2, 3, 4, 5),
+  y = c(2, 1, 2, 1),
+  yend = c(3, 2, 3, 2)
+) |>
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_segment(linewidth = 3, color = "coral") +
+  theme_minimal(base_size = 16) +
+  lims(x = c(0, 6), y = c(0, 4))
+```
+
+## Break
+
+## Circles (grid) - Small {.magic-move}
+
+```{r}
+#| label: "circles-small"
+#| dev: svg
+library(grid)
+grid.newpage()
+grid.circle(
+  x = c(0.2, 0.4, 0.6, 0.8),
+  y = c(0.3, 0.5, 0.5, 0.3),
+  r = 0.05,
+  gp = gpar(fill = "steelblue", col = NA)
+)
+```
+
+## Circles (grid) - Large {.magic-move}
+
+```{r}
+#| label: "circles-large"
+#| dev: svg
+library(grid)
+grid.newpage()
+grid.circle(
+  x = c(0.2, 0.4, 0.6, 0.8),
+  y = c(0.5, 0.7, 0.7, 0.5),
+  r = 0.08,
+  gp = gpar(fill = "steelblue", col = NA)
+)
+```

@@ -597,17 +597,24 @@ function groupConsecutiveSvgSlides(magicSlides, deck) {
 }
 
 function animateSvgMagicMove(fromSlide, toSlide, fromSvg, toSvg, deck, onComplete) {
-  // Parse paths and rects from both SVGs
+  // Parse all element types from both SVGs
   const fromPaths = parseSvgPaths(fromSvg);
   const toPaths = parseSvgPaths(toSvg);
   const fromRects = parseSvgRects(fromSvg);
   const toRects = parseSvgRects(toSvg);
+  const fromCircles = parseSvgCircles(fromSvg);
+  const toCircles = parseSvgCircles(toSvg);
+  const fromLines = parseSvgLines(fromSvg);
+  const toLines = parseSvgLines(toSvg);
 
-  // Match paths between SVGs
+  // Match elements between SVGs
   const pathMatches = matchSvgPaths(fromPaths, toPaths);
   const rectMatches = matchSvgRects(fromRects, toRects);
+  const circleMatches = matchSvgCircles(fromCircles, toCircles);
+  const lineMatches = matchSvgLines(fromLines, toLines);
 
-  if (pathMatches.length === 0 && rectMatches.length === 0) {
+  if (pathMatches.length === 0 && rectMatches.length === 0 &&
+      circleMatches.length === 0 && lineMatches.length === 0) {
     onComplete();
     return;
   }
@@ -632,6 +639,21 @@ function animateSvgMagicMove(fromSlide, toSlide, fromSvg, toSvg, deck, onComplet
     match.fromY = parseFloat(match.fromRect.getAttribute('y'));
     match.fromWidth = parseFloat(match.fromRect.getAttribute('width'));
     match.fromHeight = parseFloat(match.fromRect.getAttribute('height'));
+  }
+
+  // Capture "from" circle data
+  for (const match of circleMatches) {
+    match.fromCx = parseFloat(match.fromCircle.getAttribute('cx'));
+    match.fromCy = parseFloat(match.fromCircle.getAttribute('cy'));
+    match.fromR = parseFloat(match.fromCircle.getAttribute('r'));
+  }
+
+  // Capture "from" line data
+  for (const match of lineMatches) {
+    match.fromX1 = parseFloat(match.fromLine.getAttribute('x1'));
+    match.fromY1 = parseFloat(match.fromLine.getAttribute('y1'));
+    match.fromX2 = parseFloat(match.fromLine.getAttribute('x2'));
+    match.fromY2 = parseFloat(match.fromLine.getAttribute('y2'));
   }
 
   // Restore fromSlide
@@ -662,6 +684,32 @@ function animateSvgMagicMove(fromSlide, toSlide, fromSvg, toSvg, deck, onComplet
     match.toRect.setAttribute('height', match.fromHeight);
   }
 
+  // Capture "to" circle data and set up animation
+  for (const match of circleMatches) {
+    match.toCx = parseFloat(match.toCircle.getAttribute('cx'));
+    match.toCy = parseFloat(match.toCircle.getAttribute('cy'));
+    match.toR = parseFloat(match.toCircle.getAttribute('r'));
+
+    // Set the "to" circle to start at the "from" position
+    match.toCircle.setAttribute('cx', match.fromCx);
+    match.toCircle.setAttribute('cy', match.fromCy);
+    match.toCircle.setAttribute('r', match.fromR);
+  }
+
+  // Capture "to" line data and set up animation
+  for (const match of lineMatches) {
+    match.toX1 = parseFloat(match.toLine.getAttribute('x1'));
+    match.toY1 = parseFloat(match.toLine.getAttribute('y1'));
+    match.toX2 = parseFloat(match.toLine.getAttribute('x2'));
+    match.toY2 = parseFloat(match.toLine.getAttribute('y2'));
+
+    // Set the "to" line to start at the "from" position
+    match.toLine.setAttribute('x1', match.fromX1);
+    match.toLine.setAttribute('y1', match.fromY1);
+    match.toLine.setAttribute('x2', match.fromX2);
+    match.toLine.setAttribute('y2', match.fromY2);
+  }
+
   // Force reflow
   toSvg.getBoundingClientRect();
 
@@ -672,6 +720,12 @@ function animateSvgMagicMove(fromSlide, toSlide, fromSvg, toSvg, deck, onComplet
     }
     for (const match of rectMatches) {
       animateRect(match.toRect, match, 500);
+    }
+    for (const match of circleMatches) {
+      animateCircle(match.toCircle, match, 500);
+    }
+    for (const match of lineMatches) {
+      animateLine(match.toLine, match, 500);
     }
   });
 
@@ -953,6 +1007,297 @@ function animateRect(rectElement, match, duration) {
     rectElement.setAttribute('y', y);
     rectElement.setAttribute('width', width);
     rectElement.setAttribute('height', height);
+
+    if (progress < 1) {
+      requestAnimationFrame(animate);
+    }
+  }
+
+  requestAnimationFrame(animate);
+}
+
+// =============================================================================
+// CIRCLE SUPPORT
+// =============================================================================
+
+function parseSvgCircles(svg) {
+  const circles = [];
+
+  const circleElements = svg.querySelectorAll('circle');
+
+  for (const circle of circleElements) {
+    const cx = circle.getAttribute('cx');
+    const cy = circle.getAttribute('cy');
+    const r = circle.getAttribute('r');
+
+    if (!cx || !cy || !r) continue;
+
+    // Get parent clip-path for identification
+    const parent = circle.closest('g[clip-path]');
+    const clipPath = parent ? parent.getAttribute('clip-path') : null;
+
+    // Get stroke/fill properties for matching
+    const stroke = circle.getAttribute('stroke') ||
+                   window.getComputedStyle(circle).stroke;
+    const fill = circle.getAttribute('fill') ||
+                 window.getComputedStyle(circle).fill;
+    const strokeWidth = circle.getAttribute('stroke-width') ||
+                        window.getComputedStyle(circle).strokeWidth;
+
+    circles.push({
+      element: circle,
+      cx: parseFloat(cx),
+      cy: parseFloat(cy),
+      r: parseFloat(r),
+      clipPath: clipPath,
+      stroke: stroke,
+      fill: fill,
+      strokeWidth: strokeWidth,
+      elementType: 'circle'
+    });
+  }
+
+  return circles;
+}
+
+function matchSvgCircles(fromCircles, toCircles) {
+  const matches = [];
+
+  // Group circles by their visual characteristics
+  const fromByType = groupCirclesByType(fromCircles);
+  const toByType = groupCirclesByType(toCircles);
+
+  // Match circles within each type group by position (left to right, top to bottom)
+  for (const type of Object.keys(fromByType)) {
+    const fromGroup = fromByType[type] || [];
+    const toGroup = toByType[type] || [];
+
+    // Sort by position (x first, then y)
+    fromGroup.sort((a, b) => a.cx - b.cx || a.cy - b.cy);
+    toGroup.sort((a, b) => a.cx - b.cx || a.cy - b.cy);
+
+    // Match by position in sorted group
+    const count = Math.min(fromGroup.length, toGroup.length);
+    for (let i = 0; i < count; i++) {
+      const fromCircle = fromGroup[i];
+      const toCircle = toGroup[i];
+
+      // Only animate if something differs
+      const differs = fromCircle.cx !== toCircle.cx ||
+                      fromCircle.cy !== toCircle.cy ||
+                      fromCircle.r !== toCircle.r;
+
+      if (differs) {
+        matches.push({
+          fromCircle: fromCircle.element,
+          toCircle: toCircle.element
+        });
+      }
+    }
+  }
+
+  return matches;
+}
+
+function groupCirclesByType(circles) {
+  const groups = {};
+
+  for (const circle of circles) {
+    const signature = createCircleSignature(circle);
+
+    if (!groups[signature]) {
+      groups[signature] = [];
+    }
+    groups[signature].push(circle);
+  }
+
+  return groups;
+}
+
+function createCircleSignature(circle) {
+  const parts = [
+    circle.clipPath || 'none',
+    circle.fill || 'none',
+    circle.stroke || 'none',
+    circle.strokeWidth || '0'
+  ];
+  return parts.join('|');
+}
+
+function animateCircle(circleElement, match, duration) {
+  const startTime = performance.now();
+
+  const fromCx = match.fromCx;
+  const fromCy = match.fromCy;
+  const fromR = match.fromR;
+  const toCx = match.toCx;
+  const toCy = match.toCy;
+  const toR = match.toR;
+
+  function animate(currentTime) {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+
+    // Easing: ease-in-out
+    const eased = progress < 0.5
+      ? 2 * progress * progress
+      : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
+    // Interpolate attributes
+    const cx = fromCx + (toCx - fromCx) * eased;
+    const cy = fromCy + (toCy - fromCy) * eased;
+    const r = fromR + (toR - fromR) * eased;
+
+    circleElement.setAttribute('cx', cx);
+    circleElement.setAttribute('cy', cy);
+    circleElement.setAttribute('r', r);
+
+    if (progress < 1) {
+      requestAnimationFrame(animate);
+    }
+  }
+
+  requestAnimationFrame(animate);
+}
+
+// =============================================================================
+// LINE SUPPORT
+// =============================================================================
+
+function parseSvgLines(svg) {
+  const lines = [];
+
+  const lineElements = svg.querySelectorAll('line');
+
+  for (const line of lineElements) {
+    const x1 = line.getAttribute('x1');
+    const y1 = line.getAttribute('y1');
+    const x2 = line.getAttribute('x2');
+    const y2 = line.getAttribute('y2');
+
+    if (x1 === null || y1 === null || x2 === null || y2 === null) continue;
+
+    // Get parent clip-path for identification
+    const parent = line.closest('g[clip-path]');
+    const clipPath = parent ? parent.getAttribute('clip-path') : null;
+
+    // Get stroke properties for matching
+    const stroke = line.getAttribute('stroke') ||
+                   window.getComputedStyle(line).stroke;
+    const strokeWidth = line.getAttribute('stroke-width') ||
+                        window.getComputedStyle(line).strokeWidth;
+
+    lines.push({
+      element: line,
+      x1: parseFloat(x1),
+      y1: parseFloat(y1),
+      x2: parseFloat(x2),
+      y2: parseFloat(y2),
+      clipPath: clipPath,
+      stroke: stroke,
+      strokeWidth: strokeWidth,
+      elementType: 'line'
+    });
+  }
+
+  return lines;
+}
+
+function matchSvgLines(fromLines, toLines) {
+  const matches = [];
+
+  // Group lines by their visual characteristics
+  const fromByType = groupLinesByType(fromLines);
+  const toByType = groupLinesByType(toLines);
+
+  // Match lines within each type group
+  for (const type of Object.keys(fromByType)) {
+    const fromGroup = fromByType[type] || [];
+    const toGroup = toByType[type] || [];
+
+    // Sort by starting position (x1 first, then y1)
+    fromGroup.sort((a, b) => a.x1 - b.x1 || a.y1 - b.y1);
+    toGroup.sort((a, b) => a.x1 - b.x1 || a.y1 - b.y1);
+
+    // Match by position in sorted group
+    const count = Math.min(fromGroup.length, toGroup.length);
+    for (let i = 0; i < count; i++) {
+      const fromLine = fromGroup[i];
+      const toLine = toGroup[i];
+
+      // Only animate if something differs
+      const differs = fromLine.x1 !== toLine.x1 ||
+                      fromLine.y1 !== toLine.y1 ||
+                      fromLine.x2 !== toLine.x2 ||
+                      fromLine.y2 !== toLine.y2;
+
+      if (differs) {
+        matches.push({
+          fromLine: fromLine.element,
+          toLine: toLine.element
+        });
+      }
+    }
+  }
+
+  return matches;
+}
+
+function groupLinesByType(lines) {
+  const groups = {};
+
+  for (const line of lines) {
+    const signature = createLineSignature(line);
+
+    if (!groups[signature]) {
+      groups[signature] = [];
+    }
+    groups[signature].push(line);
+  }
+
+  return groups;
+}
+
+function createLineSignature(line) {
+  const parts = [
+    line.clipPath || 'none',
+    line.stroke || 'none',
+    line.strokeWidth || '0'
+  ];
+  return parts.join('|');
+}
+
+function animateLine(lineElement, match, duration) {
+  const startTime = performance.now();
+
+  const fromX1 = match.fromX1;
+  const fromY1 = match.fromY1;
+  const fromX2 = match.fromX2;
+  const fromY2 = match.fromY2;
+  const toX1 = match.toX1;
+  const toY1 = match.toY1;
+  const toX2 = match.toX2;
+  const toY2 = match.toY2;
+
+  function animate(currentTime) {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+
+    // Easing: ease-in-out
+    const eased = progress < 0.5
+      ? 2 * progress * progress
+      : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
+    // Interpolate attributes
+    const x1 = fromX1 + (toX1 - fromX1) * eased;
+    const y1 = fromY1 + (toY1 - fromY1) * eased;
+    const x2 = fromX2 + (toX2 - fromX2) * eased;
+    const y2 = fromY2 + (toY2 - fromY2) * eased;
+
+    lineElement.setAttribute('x1', x1);
+    lineElement.setAttribute('y1', y1);
+    lineElement.setAttribute('x2', x2);
+    lineElement.setAttribute('y2', y2);
 
     if (progress < 1) {
       requestAnimationFrame(animate);
