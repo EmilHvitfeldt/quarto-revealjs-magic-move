@@ -220,22 +220,16 @@ function animateSlideMagicMove(fromSlide, toSlide, fromStep, toStep, overlay, de
     });
   }
 
-  // Match "to" tokens with "from" tokens by content + classes
-  const usedFromIndices = new Set();
-  for (const toData of toSpanData) {
-    const matchKey = `${toData.content}|${toData.classes}`;
-
-    // Find a matching "from" token that hasn't been used
-    for (let i = 0; i < fromTokenData.length; i++) {
-      if (usedFromIndices.has(i)) continue;
-      const fromData = fromTokenData[i];
-      const fromKey = `${fromData.content}|${fromData.classes}`;
-
-      if (matchKey === fromKey) {
-        toData.matchedFrom = fromData;
-        usedFromIndices.add(i);
-        break;
-      }
+  // Match "to" tokens with "from" tokens using minimal edit distance (LCS) so that
+  // unchanged runs stay anchored in order and duplicate content (e.g. a repeated
+  // identifier) resolves to its nearest occurrence instead of the first unused one.
+  const exactKey = (t) => `${t.content}\u0000${JSON.stringify(t.classes)}`;
+  const looseKey = (t) => t.content;
+  const matchFromIndex = computeTokenAlignment(fromTokenData, toSpanData, exactKey, looseKey);
+  for (let j = 0; j < toSpanData.length; j++) {
+    const i = matchFromIndex[j];
+    if (i !== -1) {
+      toSpanData[j].matchedFrom = fromTokenData[i];
     }
   }
 
@@ -2407,7 +2401,7 @@ function initDivBasedMagicMove(deck) {
 
 // Post-process tokens: split on delimiters for finer-grained matching
 function splitTokensOnDelimiters(step) {
-  const delimiters = /([()[\]{},])/;
+  const delimiters = /([()[\]{},]|\s+)/;
 
   const newLines = [];
   const newTokens = [];
@@ -2559,47 +2553,108 @@ function assignTokenKeys(steps) {
 }
 
 function matchSteps(prevStep, currStep) {
-  // Global token matching by content + classes
-  const usedPrev = new Set();
+  const exactKey = (t) => `${t.content}\u0000${JSON.stringify(t.classes)}`;
+  const looseKey = (t) => t.content;
 
-  // First pass: exact match (content + classes)
-  for (const currToken of currStep.tokens) {
-    for (let i = 0; i < prevStep.tokens.length; i++) {
-      if (usedPrev.has(i)) continue;
+  const matchFromIndex = computeTokenAlignment(prevStep.tokens, currStep.tokens, exactKey, looseKey);
 
-      const prevToken = prevStep.tokens[i];
-      if (prevToken.content === currToken.content &&
-          arraysEqual(prevToken.classes, currToken.classes)) {
-        currToken.key = prevToken.key;
-        usedPrev.add(i);
-        break;
-      }
-    }
-  }
-
-  // Second pass: content-only match for remaining unmatched tokens
-  for (const currToken of currStep.tokens) {
-    if (currToken.key) continue; // already matched
-
-    for (let i = 0; i < prevStep.tokens.length; i++) {
-      if (usedPrev.has(i)) continue;
-
-      const prevToken = prevStep.tokens[i];
-      if (prevToken.content === currToken.content) {
-        currToken.key = prevToken.key;
-        usedPrev.add(i);
-        break;
-      }
+  for (let j = 0; j < currStep.tokens.length; j++) {
+    const i = matchFromIndex[j];
+    if (i !== -1) {
+      currStep.tokens[j].key = prevStep.tokens[i].key;
     }
   }
 }
 
-function arraysEqual(a, b) {
-  if (a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i++) {
-    if (a[i] !== b[i]) return false;
+// Align "to" tokens with "from" tokens using minimal edit distance (LCS) rather than
+// greedy first-fit, so that unchanged runs keep their relative order/position and
+// duplicate content (e.g. a repeated identifier) resolves to its nearest plausible
+// match instead of the first available one anywhere in the array.
+//
+// Returns an array parallel to `toTokens` where each entry is the matched index into
+// `fromTokens`, or -1 if the token is new/unmatched. `exactKeyFn` should capture full
+// token identity (content + classes); `looseKeyFn` is used only as a fallback within
+// the gaps between exact matches (content-only, e.g. for tokens whose classes changed).
+function computeTokenAlignment(fromTokens, toTokens, exactKeyFn, looseKeyFn) {
+  const anchors = computeLCSAnchors(fromTokens, toTokens, exactKeyFn);
+  const matchFromIndex = new Array(toTokens.length).fill(-1);
+  for (const [i, j] of anchors) {
+    matchFromIndex[j] = i;
   }
-  return true;
+
+  // Fill in the gaps before/between/after the anchors with a local (content-only)
+  // nearest-match pass, so duplicate tokens don't bind to a far-away occurrence.
+  let prevFromEnd = 0;
+  let prevToEnd = 0;
+  const boundaries = anchors.concat([[fromTokens.length, toTokens.length]]);
+  for (const [fromAnchor, toAnchor] of boundaries) {
+    matchGap(prevFromEnd, fromAnchor, prevToEnd, toAnchor);
+    prevFromEnd = fromAnchor + 1;
+    prevToEnd = toAnchor + 1;
+  }
+
+  function matchGap(fromStart, fromEnd, toStart, toEnd) {
+    const usedFrom = new Set();
+    for (let tj = toStart; tj < toEnd; tj++) {
+      const toKey = looseKeyFn(toTokens[tj]);
+      let bestFromIndex = -1;
+      let bestDistance = Infinity;
+      for (let fi = fromStart; fi < fromEnd; fi++) {
+        if (usedFrom.has(fi)) continue;
+        if (looseKeyFn(fromTokens[fi]) !== toKey) continue;
+        const distance = Math.abs((fi - fromStart) - (tj - toStart));
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          bestFromIndex = fi;
+        }
+      }
+      if (bestFromIndex !== -1) {
+        matchFromIndex[tj] = bestFromIndex;
+        usedFrom.add(bestFromIndex);
+      }
+    }
+  }
+
+  return matchFromIndex;
+}
+
+// Longest common subsequence of tokens (by key) between fromTokens and toTokens.
+// Returns an ordered list of [fromIndex, toIndex] pairs. Small O(n*m) DP table is
+// fine here: these arrays are per-line/per-step token lists (tens to low hundreds
+// of entries), not whole-document diffs.
+function computeLCSAnchors(fromTokens, toTokens, keyFn) {
+  const n = fromTokens.length;
+  const m = toTokens.length;
+  const fromKeys = fromTokens.map(keyFn);
+  const toKeys = toTokens.map(keyFn);
+
+  const dp = new Array(n + 1);
+  for (let i = 0; i <= n; i++) dp[i] = new Int32Array(m + 1);
+
+  for (let i = n - 1; i >= 0; i--) {
+    for (let j = m - 1; j >= 0; j--) {
+      dp[i][j] = fromKeys[i] === toKeys[j]
+        ? dp[i + 1][j + 1] + 1
+        : Math.max(dp[i + 1][j], dp[i][j + 1]);
+    }
+  }
+
+  const anchors = [];
+  let i = 0;
+  let j = 0;
+  while (i < n && j < m) {
+    if (fromKeys[i] === toKeys[j]) {
+      anchors.push([i, j]);
+      i++;
+      j++;
+    } else if (dp[i + 1][j] >= dp[i][j + 1]) {
+      i++;
+    } else {
+      j++;
+    }
+  }
+
+  return anchors;
 }
 
 function renderStep(container, step) {
