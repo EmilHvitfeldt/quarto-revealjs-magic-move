@@ -83,11 +83,21 @@ Magic-move works on:
 
 ## Examples
 
-- [Code — div-based fragments](examples/basic.html){.btn .btn-primary}
-- [Code — slide-based](examples/slide-based.html){.btn .btn-primary}
-- [SVG plots](examples/svgs.html){.btn .btn-primary}
-- [Math](examples/mathjax.html){.btn .btn-primary}
-- [Source Code](https://github.com/emilhvitfeldt/quarto-revealjs-magic-move){.btn .btn-secondary}
+### Code — div-based fragments
+
+- [View Example](examples/basic.html){.btn .btn-primary}
+- [Source Code](https://github.com/emilhvitfeldt/quarto-revealjs-magic-move/blob/main/examples/basic.qmd){.btn .btn-secondary}
+
+<iframe src="examples/basic.html" width="100%" height="500" style="border: 1px solid #ccc; border-radius: 4px;"></iframe>
+
+### Code — slide-based
+
+- [View Example](examples/slide-based.html){.btn .btn-primary}
+- [Source Code](https://github.com/emilhvitfeldt/quarto-revealjs-magic-move/blob/main/examples/slide-based.qmd){.btn .btn-secondary}
+
+<iframe src="examples/slide-based.html" width="100%" height="500" style="border: 1px solid #ccc; border-radius: 4px;"></iframe>
+
+- [Full Source Code](https://github.com/emilhvitfeldt/quarto-revealjs-magic-move){.btn .btn-secondary}
 
 ## License
 
