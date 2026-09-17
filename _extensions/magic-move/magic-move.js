@@ -14,6 +14,7 @@ window.RevealMagicMove = window.RevealMagicMove || {
       initDivBasedMagicMove(deck);
       initSlideBasedMagicMove(deck);
       await initSvgMagicMove(deck);
+      await initDivBasedMathMagicMove(deck);
     });
   }
 };
@@ -2693,4 +2694,216 @@ function animateToStep(container, fromStep, toStep) {
       span.dataset.entering = 'true';
     }
   }
+}
+
+// =============================================================================
+// DIV-BASED MATH MAGIC MOVE
+// =============================================================================
+
+async function initDivBasedMathMagicMove(deck) {
+  const containers = document.querySelectorAll('.magic-move:not(section)');
+  const mathContainers = [];
+
+  for (const container of containers) {
+    if (container.querySelector('pre code')) continue;
+
+    // Detect math paragraphs by .math spans — present before MathJax renders
+    const mathParagraphs = Array.from(container.querySelectorAll(':scope > p')).filter(p =>
+      p.querySelector('.math')
+    );
+
+    if (mathParagraphs.length < 2) continue;
+
+    // Hide non-first paragraphs IMMEDIATELY so they don't flash before MathJax runs
+    for (let i = 1; i < mathParagraphs.length; i++) {
+      mathParagraphs[i].style.display = 'none';
+    }
+
+    // Insert fragment markers between math steps
+    for (let i = 0; i < mathParagraphs.length - 1; i++) {
+      const fragment = document.createElement('span');
+      fragment.className = 'fragment magic-move-step';
+      fragment.dataset.fragmentIndex = i;
+      mathParagraphs[i].parentNode.insertBefore(fragment, mathParagraphs[i].nextSibling);
+    }
+
+    mathContainers.push({ container, mathParagraphs });
+  }
+
+  if (mathContainers.length === 0) return;
+
+  deck.sync();
+
+  // Wait for MathJax to finish rendering (handles both MathJax 2 and 3)
+  await waitForMathJax();
+
+  for (const { container, mathParagraphs } of mathContainers) {
+    let currentStep = 0;
+    const slide = container.closest('section');
+
+    deck.on('fragmentshown', (event) => {
+      if (slide.contains(event.fragment) && event.fragment.classList.contains('magic-move-step')) {
+        const nextStep = currentStep + 1;
+        if (nextStep < mathParagraphs.length) {
+          animateMathStep(mathParagraphs[currentStep], mathParagraphs[nextStep]);
+          currentStep = nextStep;
+        }
+      }
+    });
+
+    deck.on('fragmenthidden', (event) => {
+      if (slide.contains(event.fragment) && event.fragment.classList.contains('magic-move-step')) {
+        const prevStep = currentStep - 1;
+        if (prevStep >= 0) {
+          animateMathStep(mathParagraphs[currentStep], mathParagraphs[prevStep]);
+          currentStep = prevStep;
+        }
+      }
+    });
+  }
+}
+
+function waitForMathJax() {
+  return new Promise(resolve => {
+    if (window.MathJax?.startup?.promise) {
+      // MathJax 3
+      window.MathJax.startup.promise.then(resolve);
+    } else if (window.MathJax?.Hub) {
+      // MathJax 2
+      window.MathJax.Hub.Queue(resolve);
+    } else {
+      resolve();
+    }
+  });
+}
+
+// Extract leaf elements (direct text, no element children) from a rendered math container
+function getMathLeafElements(root) {
+  const leaves = [];
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
+  let node = walker.nextNode();
+  while (node) {
+    const children = Array.from(node.childNodes);
+    const hasDirectText = children.some(
+      c => c.nodeType === Node.TEXT_NODE && c.textContent.trim().length > 0
+    );
+    const hasElementChild = children.some(c => c.nodeType === Node.ELEMENT_NODE);
+    if (hasDirectText && !hasElementChild) {
+      leaves.push({ element: node, text: node.textContent.trim() });
+    }
+    node = walker.nextNode();
+  }
+  return leaves;
+}
+
+function animateMathStep(fromPara, toPara) {
+  // Support both MathJax 2 (.MathJax_Display) and MathJax 3 (mjx-container)
+  const fromMath = fromPara.querySelector('.MathJax_Display, .MathJax, mjx-container');
+  const toMath = toPara.querySelector('.MathJax_Display, .MathJax, mjx-container');
+
+  if (!fromMath || !toMath) {
+    fromPara.style.display = 'none';
+    toPara.style.display = '';
+    return;
+  }
+
+  // First: record positions of all leaf elements in the visible (from) step
+  const fromLeaves = getMathLeafElements(fromMath);
+  const fromPositions = new Map();
+  for (const leaf of fromLeaves) {
+    fromPositions.set(leaf, leaf.element.getBoundingClientRect());
+  }
+
+  // Make toStep temporarily visible but off-screen to measure positions
+  toPara.style.display = '';
+  toPara.style.visibility = 'hidden';
+  toPara.style.position = 'absolute';
+  toPara.style.top = '0';
+  toPara.style.left = '0';
+
+  const toLeaves = getMathLeafElements(toMath);
+  const toPositions = new Map();
+  for (const leaf of toLeaves) {
+    toPositions.set(leaf, leaf.element.getBoundingClientRect());
+  }
+
+  // Match by text content, pairing within each same-text group by index
+  const fromByText = new Map();
+  for (const leaf of fromLeaves) {
+    if (!fromByText.has(leaf.text)) fromByText.set(leaf.text, []);
+    fromByText.get(leaf.text).push(leaf);
+  }
+  const toByText = new Map();
+  for (const leaf of toLeaves) {
+    if (!toByText.has(leaf.text)) toByText.set(leaf.text, []);
+    toByText.get(leaf.text).push(leaf);
+  }
+
+  const flips = [];
+  const matchedToElements = new Set();
+
+  for (const [text, fromGroup] of fromByText) {
+    const toGroup = toByText.get(text) || [];
+    const count = Math.min(fromGroup.length, toGroup.length);
+    for (let i = 0; i < count; i++) {
+      const fromPos = fromPositions.get(fromGroup[i]);
+      const toPos = toPositions.get(toGroup[i]);
+      if (fromPos && toPos) {
+        flips.push({
+          element: toGroup[i].element,
+          deltaX: fromPos.left - toPos.left,
+          deltaY: fromPos.top - toPos.top
+        });
+        matchedToElements.add(toGroup[i].element);
+      }
+    }
+  }
+
+  // Switch: hide from, restore to to normal flow
+  fromPara.style.display = 'none';
+  toPara.style.visibility = '';
+  toPara.style.position = '';
+  toPara.style.top = '';
+  toPara.style.left = '';
+
+  // Invert: shift matched elements back to their old screen positions
+  for (const flip of flips) {
+    if (Math.abs(flip.deltaX) > 0.5 || Math.abs(flip.deltaY) > 0.5) {
+      flip.element.style.display = 'inline-block';
+      flip.element.style.transform = `translate(${flip.deltaX}px, ${flip.deltaY}px)`;
+      flip.element.style.transition = 'none';
+    }
+  }
+  // Fade in unmatched (new) elements
+  for (const leaf of toLeaves) {
+    if (!matchedToElements.has(leaf.element)) {
+      leaf.element.style.display = 'inline-block';
+      leaf.element.style.opacity = '0';
+    }
+  }
+
+  toPara.offsetHeight; // force reflow
+
+  // Play: animate to final positions
+  for (const flip of flips) {
+    if (Math.abs(flip.deltaX) > 0.5 || Math.abs(flip.deltaY) > 0.5) {
+      flip.element.style.transition = 'transform 0.5s ease-in-out';
+      flip.element.style.transform = '';
+    }
+  }
+  for (const leaf of toLeaves) {
+    if (!matchedToElements.has(leaf.element)) {
+      leaf.element.style.transition = 'opacity 0.5s ease-in-out';
+      leaf.element.style.opacity = '';
+    }
+  }
+
+  setTimeout(() => {
+    for (const leaf of toLeaves) {
+      leaf.element.style.transform = '';
+      leaf.element.style.transition = '';
+      leaf.element.style.opacity = '';
+      leaf.element.style.display = '';
+    }
+  }, 600);
 }

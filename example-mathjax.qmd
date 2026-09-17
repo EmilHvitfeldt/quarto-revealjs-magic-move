@@ -1,0 +1,28 @@
+---
+title: Magic Move MathJax Demo
+format: revealjs
+revealjs-plugins:
+  - magic-move
+---
+
+## Isolating x
+
+::: magic-move
+
+$$
+y = mx + b
+$$
+
+$$
+y - b = mx
+$$
+
+$$
+\frac{y - b}{m} = x
+$$
+
+$$
+x = \frac{y - b}{m}
+$$
+
+:::

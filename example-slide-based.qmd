@@ -61,6 +61,14 @@ It breaks the sequence.
 const x = 1
 ```
 
+## Final {.magic-move}
+
+```javascript
+const x = 1
+const z = x + y
+const y = 2
+```
+
 ## Continued {.magic-move}
 
 ```javascript
@@ -68,13 +76,7 @@ const x = 1
 const y = 2
 ```
 
-## Final {.magic-move}
 
-```javascript
-const x = 1
-const y = 2
-const z = x + y
-```
 
 ## End
 
