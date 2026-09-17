@@ -238,13 +238,7 @@ function animateSlideMagicMove(fromSlide, toSlide, fromStep, toStep, overlay, de
   const toHeightMeasured = toSourceCodeDiv.getBoundingClientRect().height;
 
   // Get reveal.js scale factor - measurements are in screen pixels but CSS needs unscaled values
-  const slidesContainer = document.querySelector('.reveal .slides');
-  const slidesTransform = window.getComputedStyle(slidesContainer).transform;
-  let scale = 1;
-  if (slidesTransform && slidesTransform !== 'none') {
-    const matrix = new DOMMatrix(slidesTransform);
-    scale = matrix.a;
-  }
+  const scale = getRevealScale();
 
   // Convert screen pixels to CSS pixels by dividing by scale
   const fromHeightCSS = fromHeight / scale;
@@ -2399,6 +2393,18 @@ function initDivBasedMagicMove(deck) {
 // SHARED UTILITIES
 // =============================================================================
 
+// reveal.js scales the whole .slides container via a CSS transform to fit the
+// viewport. getBoundingClientRect() reports already-scaled screen pixels, so any
+// measurement-derived transform we apply to a slide descendant needs to be
+// divided by this factor first, or it gets scaled a second time by the ancestor.
+function getRevealScale() {
+  const slidesContainer = document.querySelector('.reveal .slides');
+  if (!slidesContainer) return 1;
+  const slidesTransform = window.getComputedStyle(slidesContainer).transform;
+  if (!slidesTransform || slidesTransform === 'none') return 1;
+  return new DOMMatrix(slidesTransform).a;
+}
+
 // Post-process tokens: split on delimiters for finer-grained matching
 function splitTokensOnDelimiters(step) {
   const delimiters = /([()[\]{},]|\s+)/;
@@ -2688,6 +2694,15 @@ function animateToStep(container, fromStep, toStep) {
   const fromKeys = new Set(fromStep.tokens.map(t => t.key));
   const toKeys = new Set(toStep.tokens.map(t => t.key));
 
+  // reveal.js scales the whole .slides container to fit the viewport via a CSS
+  // transform. getBoundingClientRect() returns already-scaled screen coordinates,
+  // but a transform we apply to a token (a descendant of that scaled container)
+  // gets scaled again on top of that. Dividing the measured delta by this scale
+  // factor cancels that out, so the token travels the correct on-screen distance
+  // instead of only `scale` of it (which otherwise makes the animation look like
+  // it "jumps" most of the way instantly whenever the deck isn't at 1:1 scale).
+  const scale = getRevealScale();
+
   // FLIP: First - record current positions
   const oldPositions = new Map();
   const currentSpans = container.querySelectorAll('span > span[data-key]');
@@ -2729,20 +2744,23 @@ function animateToStep(container, fromStep, toStep) {
       // FLIP: Invert - calculate delta and apply transform
       const oldPos = oldPositions.get(key);
       const newRect = span.getBoundingClientRect();
-      const deltaX = oldPos.x - newRect.left;
-      const deltaY = oldPos.y - newRect.top;
+      const deltaX = (oldPos.x - newRect.left) / scale;
+      const deltaY = (oldPos.y - newRect.top) / scale;
 
       if (Math.abs(deltaX) > 0.5 || Math.abs(deltaY) > 0.5) {
-        // Apply inverted position (no transition)
-        span.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
-        span.style.transition = 'none';
-
-        // Force reflow
-        span.offsetHeight;
-
-        // Play - animate to final position
-        span.style.transition = 'transform 0.5s ease-in-out';
-        span.style.transform = '';
+        // Play - animate from the inverted (old) position to the final position.
+        // Using the Web Animations API instead of a CSS transition avoids the FLIP
+        // "invert + force reflow + flip transition on" dance, which depends on the
+        // browser painting the pre-transition state before the transition is
+        // switched on; that timing isn't guaranteed across browsers and can make
+        // the animation appear to jump partway before smoothing out.
+        span.animate(
+          [
+            { transform: `translate(${deltaX}px, ${deltaY}px)` },
+            { transform: 'translate(0, 0)' }
+          ],
+          { duration: 500, easing: 'ease-in-out' }
+        );
       }
     } else {
       // New token - fade in
