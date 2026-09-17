@@ -1,4 +1,6 @@
-# Magic Move for Quarto Reveal.js
+# Development Notes
+
+Implementation notes for contributors. For usage docs, see [README.md](README.md).
 
 ## Overview
 
@@ -6,9 +8,10 @@ This project implements magic-move animations for Quarto reveal.js presentations
 
 ## Key Files
 
-- **`index-native.qmd`** - Quarto source with magic-move containers
-- **`all-the-js-code-native.html`** - Contains all the JavaScript/CSS logic (loaded via `include-after-body`)
-- **`index-native.html`** - Rendered output
+- **`_extensions/magic-move/_extension.yml`** - extension metadata, registers the revealjs plugin
+- **`_extensions/magic-move/magic-move.js`** - all animation logic (div-based and slide-based)
+- **`_extensions/magic-move/magic-move.css`** - animation and layout styles
+- **`example*.qmd`** - demos covering code, slide-based, SVG, and MathJax sequences
 
 ## How It Works
 
@@ -78,15 +81,7 @@ Tokens that exist in both states smoothly move to their new positions. New token
 
 ## Configuration
 
-### Quarto YAML
-
-```yaml
-format:
-  revealjs:
-    # Do NOT set highlight-style: none - we use native highlighting
-    include-after-body:
-      - "all-the-js-code-native.html"
-```
+Note: do not set `highlight-style: none` in a document using this extension - it relies on Quarto's native syntax highlighting.
 
 ### Animation Timing
 
@@ -139,13 +134,6 @@ The line wrapper `<span>` is crucial - without it, the CSS selector `pre > code.
   - Preserving syntax highlighting classes when splitting
 
 ## Future Ideas
-
-### Quarto Extension
-
-Could package this as a `_extensions/magic-move/` extension with:
-- `_extension.yml` - metadata
-- Lua filter for transformation (cleaner syntax)
-- JS/CSS assets
 
 ### Ideal Native Syntax
 

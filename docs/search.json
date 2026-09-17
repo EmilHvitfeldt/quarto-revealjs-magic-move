@@ -1,0 +1,366 @@
+[
+  {
+    "objectID": "examples/mathjax.html#isolating-x",
+    "href": "examples/mathjax.html#isolating-x",
+    "title": "Magic Move MathJax Demo",
+    "section": "Isolating x",
+    "text": "Isolating x\n\n\\[\ny = mx + b\n\\]\n\\[\ny - b = mx\n\\]\n\\[\n\\frac{y - b}{m} = x\n\\]\n\\[\nx = \\frac{y - b}{m}\n\\]"
+  },
+  {
+    "objectID": "examples/slide-based.html#introduction",
+    "href": "examples/slide-based.html#introduction",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Introduction",
+    "text": "Introduction\nThis demo shows slide-based magic move where consecutive slides with the .magic-move class animate between each other."
+  },
+  {
+    "objectID": "examples/slide-based.html#step-1",
+    "href": "examples/slide-based.html#step-1",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Step 1",
+    "text": "Step 1\nYear.Release &lt;- game$Year.Release\ncounts &lt;- data.frame(table(Year.Release))"
+  },
+  {
+    "objectID": "examples/slide-based.html#step-2",
+    "href": "examples/slide-based.html#step-2",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Step 2",
+    "text": "Step 2\nYear.Release &lt;- game$Year.Release\ncounts &lt;- data.frame(\n  table(Year.Release)\n)"
+  },
+  {
+    "objectID": "examples/slide-based.html#step-3",
+    "href": "examples/slide-based.html#step-3",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Step 3",
+    "text": "Step 3\nYear.Release &lt;- game$Year.Release\ncounts &lt;- data.frame(\n  table(Year.Release)\n)\np &lt;- game %&gt;%\n  select(Year.Release, Global.Sales)"
+  },
+  {
+    "objectID": "examples/slide-based.html#step-4",
+    "href": "examples/slide-based.html#step-4",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Step 4",
+    "text": "Step 4\nYear.Release &lt;- game$Year.Release\ncounts &lt;- data.frame(\n  table(Year.Release)\n)\np &lt;- game %&gt;%\n  select(Year.Release, Global.Sales) %&gt;%\n  group_by(Year.Release) %&gt;%\n  summarise(Total.Sales = sum(Global.Sales))"
+  },
+  {
+    "objectID": "examples/slide-based.html#break",
+    "href": "examples/slide-based.html#break",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Break",
+    "text": "Break\nThis is a normal slide without magic-move.\nIt breaks the sequence."
+  },
+  {
+    "objectID": "examples/slide-based.html#another-sequence",
+    "href": "examples/slide-based.html#another-sequence",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Another sequence",
+    "text": "Another sequence\nconst x = 1"
+  },
+  {
+    "objectID": "examples/slide-based.html#final",
+    "href": "examples/slide-based.html#final",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Final",
+    "text": "Final\nconst x = 1\nconst z = x + y\nconst y = 2"
+  },
+  {
+    "objectID": "examples/slide-based.html#continued",
+    "href": "examples/slide-based.html#continued",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Continued",
+    "text": "Continued\nconst x = 1\nconst y = 2"
+  },
+  {
+    "objectID": "examples/slide-based.html#end",
+    "href": "examples/slide-based.html#end",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "End",
+    "text": "End\nThat’s all folks!"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "quarto-revealjs-magic-move",
+    "section": "",
+    "text": "Code, math, and SVG output morph smoothly between states instead of hard-cutting, so viewers can visually track what changed. Built on Quarto’s native syntax highlighting, with no external JavaScript dependencies."
+  },
+  {
+    "objectID": "index.html#installation",
+    "href": "index.html#installation",
+    "title": "quarto-revealjs-magic-move",
+    "section": "Installation",
+    "text": "Installation\nquarto add emilhvitfeldt/quarto-revealjs-magic-move\nThen add the plugin to your document’s YAML header:\n---\nformat: revealjs\nrevealjs-plugins:\n  - magic-move\n---"
+  },
+  {
+    "objectID": "index.html#usage",
+    "href": "index.html#usage",
+    "title": "quarto-revealjs-magic-move",
+    "section": "Usage",
+    "text": "Usage\nThere are two ways to mark up a magic-move sequence: div-based (fragments within a single slide) and slide-based (consecutive slides).\n\nDiv-based (fragments)\nWrap consecutive code blocks in a magic-move div. Each block becomes a step, and pressing space/arrow keys steps through the animation as fragments on one slide.\n::: magic-move\n\n```javascript\nif (condition) a else b\n```\n\n```javascript\nif (condition) {\n  a\n} else {\n  b\n}\n```\n\n:::\n\n\nSlide-based\nAdd the .magic-move class to consecutive slide headers instead. Each slide is a full step, and the animation plays as you navigate from one slide to the next.\n## Step 1 {.magic-move}\n\n```r\nx &lt;- 1\n```\n\n## Step 2 {.magic-move}\n\n```r\nx &lt;- 1\ny &lt;- 2\n```\nA slide without .magic-move breaks the sequence, so you can freely mix animated and regular slides.\n\n\nWhat can animate\nMagic-move works on:\n\nCode blocks (any language Quarto highlights) — tokens are matched and moved between states\nMath ($$ ... $$) — equations morph between steps\nSVG output (e.g. dev: svg R chunks with ggplot2 or grid graphics) — shapes and paths animate between states"
+  },
+  {
+    "objectID": "index.html#limitations",
+    "href": "index.html#limitations",
+    "title": "quarto-revealjs-magic-move",
+    "section": "Limitations",
+    "text": "Limitations\n\nToken matching is content-based; significantly different code may fade in/out instead of animating smoothly\nCoarse tokenization from Quarto’s syntax highlighter means very fine-grained punctuation animation isn’t always perfect"
+  },
+  {
+    "objectID": "index.html#examples",
+    "href": "index.html#examples",
+    "title": "quarto-revealjs-magic-move",
+    "section": "Examples",
+    "text": "Examples\n\nCode — div-based fragments\nCode — slide-based\nSVG plots\nMath\nSource Code"
+  },
+  {
+    "objectID": "index.html#license",
+    "href": "index.html#license",
+    "title": "quarto-revealjs-magic-move",
+    "section": "License",
+    "text": "License\nMIT"
+  },
+  {
+    "objectID": "examples/basic.html#magic-move-example",
+    "href": "examples/basic.html#magic-move-example",
+    "title": "Magic Move Demo",
+    "section": "Magic move example",
+    "text": "Magic move example\n\nYear.Release &lt;- game$Year.Release\ncounts &lt;- data.frame(table(Year.Release))\nYear.Release &lt;- game$Year.Release\ncounts &lt;- data.frame(\n  table(Year.Release)\n)\np &lt;- game %&gt;%\n  select(Year.Release, Global.Sales)\nYear.Release &lt;- game$Year.Release\ncounts &lt;- data.frame(\n  table(Year.Release)\n)\np &lt;- game %&gt;%\n  select(Year.Release, Global.Sales) %&gt;%\n  group_by(Year.Release) %&gt;%\n  summarise(Total.Sales = sum(Global.Sales))"
+  },
+  {
+    "objectID": "examples/basic.html#another-example",
+    "href": "examples/basic.html#another-example",
+    "title": "Magic Move Demo",
+    "section": "Another example",
+    "text": "Another example\n\nif (condition) a else b\nif (condition) {\n  a\n} else {\n  b\n}"
+  },
+  {
+    "objectID": "examples/svgs.html#slope-20",
+    "href": "examples/svgs.html#slope-20",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Slope = 20",
+    "text": "Slope = 20"
+  },
+  {
+    "objectID": "examples/svgs.html#slope-10",
+    "href": "examples/svgs.html#slope-10",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Slope = 10",
+    "text": "Slope = 10"
+  },
+  {
+    "objectID": "examples/svgs.html#slope-10-jitter",
+    "href": "examples/svgs.html#slope-10-jitter",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Slope = 10 + jitter",
+    "text": "Slope = 10 + jitter"
+  },
+  {
+    "objectID": "examples/svgs.html#break",
+    "href": "examples/svgs.html#break",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Break",
+    "text": "Break"
+  },
+  {
+    "objectID": "examples/svgs.html#histogram---normal",
+    "href": "examples/svgs.html#histogram---normal",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Histogram - Normal",
+    "text": "Histogram - Normal"
+  },
+  {
+    "objectID": "examples/svgs.html#histogram---shifted",
+    "href": "examples/svgs.html#histogram---shifted",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Histogram - Shifted",
+    "text": "Histogram - Shifted"
+  },
+  {
+    "objectID": "examples/svgs.html#break-1",
+    "href": "examples/svgs.html#break-1",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Break",
+    "text": "Break"
+  },
+  {
+    "objectID": "examples/svgs.html#line-segments---position-1",
+    "href": "examples/svgs.html#line-segments---position-1",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Line Segments - Position 1",
+    "text": "Line Segments - Position 1"
+  },
+  {
+    "objectID": "examples/svgs.html#line-segments---position-2",
+    "href": "examples/svgs.html#line-segments---position-2",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Line Segments - Position 2",
+    "text": "Line Segments - Position 2"
+  },
+  {
+    "objectID": "examples/svgs.html#break-2",
+    "href": "examples/svgs.html#break-2",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Break",
+    "text": "Break"
+  },
+  {
+    "objectID": "examples/svgs.html#circles-grid---small",
+    "href": "examples/svgs.html#circles-grid---small",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Circles (grid) - Small",
+    "text": "Circles (grid) - Small"
+  },
+  {
+    "objectID": "examples/svgs.html#circles-grid---large",
+    "href": "examples/svgs.html#circles-grid---large",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Circles (grid) - Large",
+    "text": "Circles (grid) - Large"
+  },
+  {
+    "objectID": "examples/svgs.html#break-3",
+    "href": "examples/svgs.html#break-3",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Break",
+    "text": "Break"
+  },
+  {
+    "objectID": "examples/svgs.html#polyline-grid---wave-1",
+    "href": "examples/svgs.html#polyline-grid---wave-1",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Polyline (grid) - Wave 1",
+    "text": "Polyline (grid) - Wave 1"
+  },
+  {
+    "objectID": "examples/svgs.html#polyline-grid---wave-2",
+    "href": "examples/svgs.html#polyline-grid---wave-2",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Polyline (grid) - Wave 2",
+    "text": "Polyline (grid) - Wave 2"
+  },
+  {
+    "objectID": "examples/svgs.html#break-4",
+    "href": "examples/svgs.html#break-4",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Break",
+    "text": "Break"
+  },
+  {
+    "objectID": "examples/svgs.html#polygon-grid---triangle",
+    "href": "examples/svgs.html#polygon-grid---triangle",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Polygon (grid) - Triangle",
+    "text": "Polygon (grid) - Triangle"
+  },
+  {
+    "objectID": "examples/svgs.html#polygon-grid---moved-triangle",
+    "href": "examples/svgs.html#polygon-grid---moved-triangle",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Polygon (grid) - Moved Triangle",
+    "text": "Polygon (grid) - Moved Triangle"
+  },
+  {
+    "objectID": "examples/svgs.html#break-5",
+    "href": "examples/svgs.html#break-5",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Break",
+    "text": "Break"
+  },
+  {
+    "objectID": "examples/svgs.html#area-chart---normal",
+    "href": "examples/svgs.html#area-chart---normal",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Area Chart - Normal",
+    "text": "Area Chart - Normal"
+  },
+  {
+    "objectID": "examples/svgs.html#area-chart---shifted",
+    "href": "examples/svgs.html#area-chart---shifted",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Area Chart - Shifted",
+    "text": "Area Chart - Shifted"
+  },
+  {
+    "objectID": "examples/svgs.html#break-6",
+    "href": "examples/svgs.html#break-6",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Break",
+    "text": "Break"
+  },
+  {
+    "objectID": "examples/svgs.html#ellipse-polygon---wide",
+    "href": "examples/svgs.html#ellipse-polygon---wide",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Ellipse (polygon) - Wide",
+    "text": "Ellipse (polygon) - Wide"
+  },
+  {
+    "objectID": "examples/svgs.html#ellipse-polygon---tall",
+    "href": "examples/svgs.html#ellipse-polygon---tall",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Ellipse (polygon) - Tall",
+    "text": "Ellipse (polygon) - Tall"
+  },
+  {
+    "objectID": "examples/svgs.html#break-7",
+    "href": "examples/svgs.html#break-7",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Break",
+    "text": "Break"
+  },
+  {
+    "objectID": "examples/svgs.html#text-grid---position-1",
+    "href": "examples/svgs.html#text-grid---position-1",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Text (grid) - Position 1",
+    "text": "Text (grid) - Position 1"
+  },
+  {
+    "objectID": "examples/svgs.html#text-grid---position-2",
+    "href": "examples/svgs.html#text-grid---position-2",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Text (grid) - Position 2",
+    "text": "Text (grid) - Position 2"
+  },
+  {
+    "objectID": "examples/svgs.html#break-8",
+    "href": "examples/svgs.html#break-8",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Break",
+    "text": "Break"
+  },
+  {
+    "objectID": "examples/svgs.html#text-labels-ggplot2---before",
+    "href": "examples/svgs.html#text-labels-ggplot2---before",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Text Labels (ggplot2) - Before",
+    "text": "Text Labels (ggplot2) - Before"
+  },
+  {
+    "objectID": "examples/svgs.html#text-labels-ggplot2---after",
+    "href": "examples/svgs.html#text-labels-ggplot2---after",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Text Labels (ggplot2) - After",
+    "text": "Text Labels (ggplot2) - After"
+  },
+  {
+    "objectID": "examples/svgs.html#break-9",
+    "href": "examples/svgs.html#break-9",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Break",
+    "text": "Break"
+  },
+  {
+    "objectID": "examples/svgs.html#bar-chart",
+    "href": "examples/svgs.html#bar-chart",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Bar Chart",
+    "text": "Bar Chart"
+  },
+  {
+    "objectID": "examples/svgs.html#pie-chart",
+    "href": "examples/svgs.html#pie-chart",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Pie Chart",
+    "text": "Pie Chart"
+  }
+]

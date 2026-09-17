@@ -1,0 +1,31 @@
+project:
+  type: website
+  output-dir: docs
+  render:
+    - index.qmd
+    - examples/basic.qmd
+    - examples/slide-based.qmd
+    - examples/svgs.qmd
+    - examples/mathjax.qmd
+
+website:
+  title: "quarto-revealjs-magic-move"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+      - text: Examples
+        menu:
+          - href: examples/basic.qmd
+            text: Code (fragments)
+          - href: examples/slide-based.qmd
+            text: Code (slides)
+          - href: examples/svgs.qmd
+            text: SVG plots
+          - href: examples/mathjax.qmd
+            text: Math
+
+format:
+  html:
+    theme: cosmo
+    toc: true

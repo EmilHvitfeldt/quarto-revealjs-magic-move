@@ -1,8 +1,9 @@
-# Magic Move for Quarto revealjs
+---
+title: "quarto-revealjs-magic-move"
+subtitle: "Animated Magic Move transitions for Quarto revealjs presentations"
+---
 
-A Quarto extension that brings [Magic Move](https://slidevjs.com/features/magic-move.html)-style animated transitions to [revealjs](https://quarto.org/docs/presentations/revealjs/) presentations. Code, math, and SVG output morph smoothly between states instead of hard-cutting, so viewers can visually track what changed.
-
-Built on Quarto's native syntax highlighting, with no external JavaScript dependencies.
+Code, math, and SVG output morph smoothly between states instead of hard-cutting, so viewers can visually track what changed. Built on Quarto's native syntax highlighting, with no external JavaScript dependencies.
 
 ## Installation
 
@@ -10,7 +11,7 @@ Built on Quarto's native syntax highlighting, with no external JavaScript depend
 quarto add emilhvitfeldt/quarto-revealjs-magic-move
 ```
 
-This installs the extension under `_extensions`. Add the following to your document's YAML header:
+Then add the plugin to your document's YAML header:
 
 ```yaml
 ---
@@ -75,12 +76,18 @@ Magic-move works on:
 - **Math** (`$$ ... $$`) — equations morph between steps
 - **SVG output** (e.g. `dev: svg` R chunks with ggplot2 or grid graphics) — shapes and paths animate between states
 
-See the `example*.qmd` files in this repo for runnable demos of each.
-
 ## Limitations
 
 - Token matching is content-based; significantly different code may fade in/out instead of animating smoothly
 - Coarse tokenization from Quarto's syntax highlighter means very fine-grained punctuation animation isn't always perfect
+
+## Examples
+
+- [Code — div-based fragments](examples/basic.html){.btn .btn-primary}
+- [Code — slide-based](examples/slide-based.html){.btn .btn-primary}
+- [SVG plots](examples/svgs.html){.btn .btn-primary}
+- [Math](examples/mathjax.html){.btn .btn-primary}
+- [Source Code](https://github.com/emilhvitfeldt/quarto-revealjs-magic-move){.btn .btn-secondary}
 
 ## License
 

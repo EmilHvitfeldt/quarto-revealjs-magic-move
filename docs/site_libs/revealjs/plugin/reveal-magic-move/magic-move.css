@@ -1,0 +1,64 @@
+.magic-move {
+  position: relative;
+}
+
+.magic-move pre {
+  margin: 0;
+}
+
+.magic-move .magic-move-wrapper {
+  position: relative;
+  padding: 1em;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.magic-move .magic-move-render {
+  position: relative;
+  white-space: pre;
+  font-family: var(--bs-font-monospace, monospace);
+  font-size: 0.875em;
+  line-height: 1.5;
+}
+
+.magic-move .magic-move-render span span[data-key] {
+  display: inline-block;
+}
+
+.magic-move .magic-move-render span span[data-entering] {
+  animation: magic-enter 0.5s ease-in-out;
+}
+
+.magic-move .magic-move-render span span[data-leaving] {
+  animation: magic-leave 0.5s ease-in-out forwards;
+}
+
+@keyframes magic-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes magic-leave {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Slide-based magic move */
+.magic-move-slide-overlay span {
+  display: inline-block;
+}
+
+/* Entering animation for slide-based magic move */
+section.magic-move pre code span[data-entering] {
+  animation: magic-enter 0.5s ease-in-out;
+}
