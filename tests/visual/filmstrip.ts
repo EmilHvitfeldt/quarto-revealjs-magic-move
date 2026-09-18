@@ -103,11 +103,19 @@ export async function captureFrame(
   if (shouldUpdateBaselines || !fs.existsSync(baselinePath)) {
     fs.copyFileSync(actualPath, baselinePath);
   } else {
-    const diffRatio = comparePngs(baselinePath, actualPath, testInfo.outputPath(name.replace(/\.png$/, '-diff.png')));
+    // testInfo.outputPath() returns a *different* path each time it's
+    // called with the same argument (it dedupes to avoid accidental
+    // overwrites), so this must be computed once and reused for both the
+    // write (inside comparePngs) and the attach() read below — calling it
+    // twice caused attach() to look for the diff file in a path nothing
+    // had actually written to (ENOENT), masking the real diff failure
+    // with an unrelated crash.
+    const diffPath = testInfo.outputPath(name.replace(/\.png$/, '-diff.png'));
+    const diffRatio = comparePngs(baselinePath, actualPath, diffPath);
     if (diffRatio > maxDiffPixelRatio) {
       await testInfo.attach(`${name} (actual)`, { path: actualPath, contentType: 'image/png' });
       await testInfo.attach(`${name} (diff)`, {
-        path: testInfo.outputPath(name.replace(/\.png$/, '-diff.png')),
+        path: diffPath,
         contentType: 'image/png',
       });
       throw new Error(
