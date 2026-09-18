@@ -1,5 +1,5 @@
 import { test } from '@playwright/test';
-import { advanceFragment, gotoSlide, retreatFragment } from './filmstrip';
+import { goNext, goPrev, gotoSlide } from './filmstrip';
 
 test.use({ video: 'on' });
 
@@ -19,16 +19,16 @@ test.describe('basic.qmd — div-based magic-move', () => {
     await gotoSlide(page, '/examples/basic.html', 'magic-move-example');
     await page.waitForTimeout(500);
 
-    await advanceFragment(page);
+    await goNext(page);
     await page.waitForTimeout(1000);
 
-    await advanceFragment(page);
+    await goNext(page);
     await page.waitForTimeout(1000);
 
-    await retreatFragment(page);
+    await goPrev(page);
     await page.waitForTimeout(1000);
 
-    await retreatFragment(page);
+    await goPrev(page);
     await page.waitForTimeout(1000);
   });
 
@@ -36,10 +36,10 @@ test.describe('basic.qmd — div-based magic-move', () => {
     await gotoSlide(page, '/examples/basic.html', 'another-example');
     await page.waitForTimeout(500);
 
-    await advanceFragment(page);
+    await goNext(page);
     await page.waitForTimeout(1000);
 
-    await retreatFragment(page);
+    await goPrev(page);
     await page.waitForTimeout(1000);
   });
 });

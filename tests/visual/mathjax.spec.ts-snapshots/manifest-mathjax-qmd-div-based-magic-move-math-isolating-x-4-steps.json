@@ -1,0 +1,154 @@
+{
+  "key": "mathjax-qmd-div-based-magic-move-math-isolating-x-4-steps",
+  "title": "Isolating x (4 steps)",
+  "frames": [
+    {
+      "name": "math-step1-initial.png",
+      "label": "Step 1 (initial)"
+    },
+    {
+      "name": "math-step2-0ms.png",
+      "label": "Step 2 @ 0ms"
+    },
+    {
+      "name": "math-step2-100ms.png",
+      "label": "Step 2 @ 100ms"
+    },
+    {
+      "name": "math-step2-250ms.png",
+      "label": "Step 2 @ 250ms"
+    },
+    {
+      "name": "math-step2-450ms.png",
+      "label": "Step 2 @ 450ms"
+    },
+    {
+      "name": "math-step2-700ms.png",
+      "label": "Step 2 @ 700ms"
+    },
+    {
+      "name": "math-step2-950ms.png",
+      "label": "Step 2 @ 950ms"
+    },
+    {
+      "name": "math-step3-0ms.png",
+      "label": "Step 3 @ 0ms"
+    },
+    {
+      "name": "math-step3-100ms.png",
+      "label": "Step 3 @ 100ms"
+    },
+    {
+      "name": "math-step3-250ms.png",
+      "label": "Step 3 @ 250ms"
+    },
+    {
+      "name": "math-step3-450ms.png",
+      "label": "Step 3 @ 450ms"
+    },
+    {
+      "name": "math-step3-700ms.png",
+      "label": "Step 3 @ 700ms"
+    },
+    {
+      "name": "math-step3-950ms.png",
+      "label": "Step 3 @ 950ms"
+    },
+    {
+      "name": "math-step4-0ms.png",
+      "label": "Step 4 @ 0ms"
+    },
+    {
+      "name": "math-step4-100ms.png",
+      "label": "Step 4 @ 100ms"
+    },
+    {
+      "name": "math-step4-250ms.png",
+      "label": "Step 4 @ 250ms"
+    },
+    {
+      "name": "math-step4-450ms.png",
+      "label": "Step 4 @ 450ms"
+    },
+    {
+      "name": "math-step4-700ms.png",
+      "label": "Step 4 @ 700ms"
+    },
+    {
+      "name": "math-step4-950ms.png",
+      "label": "Step 4 @ 950ms"
+    },
+    {
+      "name": "math-back-step3-0ms.png",
+      "label": "Back to step 3 @ 0ms"
+    },
+    {
+      "name": "math-back-step3-100ms.png",
+      "label": "Back to step 3 @ 100ms"
+    },
+    {
+      "name": "math-back-step3-250ms.png",
+      "label": "Back to step 3 @ 250ms"
+    },
+    {
+      "name": "math-back-step3-450ms.png",
+      "label": "Back to step 3 @ 450ms"
+    },
+    {
+      "name": "math-back-step3-700ms.png",
+      "label": "Back to step 3 @ 700ms"
+    },
+    {
+      "name": "math-back-step3-950ms.png",
+      "label": "Back to step 3 @ 950ms"
+    },
+    {
+      "name": "math-back-step2-0ms.png",
+      "label": "Back to step 2 @ 0ms"
+    },
+    {
+      "name": "math-back-step2-100ms.png",
+      "label": "Back to step 2 @ 100ms"
+    },
+    {
+      "name": "math-back-step2-250ms.png",
+      "label": "Back to step 2 @ 250ms"
+    },
+    {
+      "name": "math-back-step2-450ms.png",
+      "label": "Back to step 2 @ 450ms"
+    },
+    {
+      "name": "math-back-step2-700ms.png",
+      "label": "Back to step 2 @ 700ms"
+    },
+    {
+      "name": "math-back-step2-950ms.png",
+      "label": "Back to step 2 @ 950ms"
+    },
+    {
+      "name": "math-back-step1-0ms.png",
+      "label": "Back to step 1 @ 0ms"
+    },
+    {
+      "name": "math-back-step1-100ms.png",
+      "label": "Back to step 1 @ 100ms"
+    },
+    {
+      "name": "math-back-step1-250ms.png",
+      "label": "Back to step 1 @ 250ms"
+    },
+    {
+      "name": "math-back-step1-450ms.png",
+      "label": "Back to step 1 @ 450ms"
+    },
+    {
+      "name": "math-back-step1-700ms.png",
+      "label": "Back to step 1 @ 700ms"
+    },
+    {
+      "name": "math-back-step1-950ms.png",
+      "label": "Back to step 1 @ 950ms"
+    }
+  ]
+}

@@ -1,0 +1,106 @@
+{
+  "key": "slide-based-qmd-slide-based-magic-move-javascript-code-sequence-3-slides",
+  "title": "JavaScript code sequence (3 slides)",
+  "frames": [
+    {
+      "name": "js-step1-initial.png",
+      "label": "Step 1 (initial)"
+    },
+    {
+      "name": "js-step2-0ms.png",
+      "label": "Step 2 @ 0ms"
+    },
+    {
+      "name": "js-step2-100ms.png",
+      "label": "Step 2 @ 100ms"
+    },
+    {
+      "name": "js-step2-250ms.png",
+      "label": "Step 2 @ 250ms"
+    },
+    {
+      "name": "js-step2-450ms.png",
+      "label": "Step 2 @ 450ms"
+    },
+    {
+      "name": "js-step2-700ms.png",
+      "label": "Step 2 @ 700ms"
+    },
+    {
+      "name": "js-step2-950ms.png",
+      "label": "Step 2 @ 950ms"
+    },
+    {
+      "name": "js-step3-0ms.png",
+      "label": "Step 3 @ 0ms"
+    },
+    {
+      "name": "js-step3-100ms.png",
+      "label": "Step 3 @ 100ms"
+    },
+    {
+      "name": "js-step3-250ms.png",
+      "label": "Step 3 @ 250ms"
+    },
+    {
+      "name": "js-step3-450ms.png",
+      "label": "Step 3 @ 450ms"
+    },
+    {
+      "name": "js-step3-700ms.png",
+      "label": "Step 3 @ 700ms"
+    },
+    {
+      "name": "js-step3-950ms.png",
+      "label": "Step 3 @ 950ms"
+    },
+    {
+      "name": "js-back-step2-0ms.png",
+      "label": "Back to step 2 @ 0ms"
+    },
+    {
+      "name": "js-back-step2-100ms.png",
+      "label": "Back to step 2 @ 100ms"
+    },
+    {
+      "name": "js-back-step2-250ms.png",
+      "label": "Back to step 2 @ 250ms"
+    },
+    {
+      "name": "js-back-step2-450ms.png",
+      "label": "Back to step 2 @ 450ms"
+    },
+    {
+      "name": "js-back-step2-700ms.png",
+      "label": "Back to step 2 @ 700ms"
+    },
+    {
+      "name": "js-back-step2-950ms.png",
+      "label": "Back to step 2 @ 950ms"
+    },
+    {
+      "name": "js-back-step1-0ms.png",
+      "label": "Back to step 1 @ 0ms"
+    },
+    {
+      "name": "js-back-step1-100ms.png",
+      "label": "Back to step 1 @ 100ms"
+    },
+    {
+      "name": "js-back-step1-250ms.png",
+      "label": "Back to step 1 @ 250ms"
+    },
+    {
+      "name": "js-back-step1-450ms.png",
+      "label": "Back to step 1 @ 450ms"
+    },
+    {
+      "name": "js-back-step1-700ms.png",
+      "label": "Back to step 1 @ 700ms"
+    },
+    {
+      "name": "js-back-step1-950ms.png",
+      "label": "Back to step 1 @ 950ms"
+    }
+  ]
+}

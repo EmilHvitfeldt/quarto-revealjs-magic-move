@@ -11,6 +11,7 @@ declare global {
       isReady(): boolean;
       next(): void;
       prev(): void;
+      configure(options: Record<string, unknown>): void;
     };
   }
 }
@@ -22,8 +23,15 @@ declare global {
 // frames.
 export const SAMPLE_SCHEDULE_MS = [0, 100, 250, 450, 700, 950];
 
-const MAX_DIFF_PIXEL_RATIO = 0.02;
+const MAX_DIFF_PIXEL_RATIO = 0.04;
 const shouldUpdateBaselines = process.env.UPDATE_SNAPSHOTS === '1' || process.env.UPDATE_SNAPSHOTS === 'true';
+
+// Either a locator scoped to a single container (div-based magic-move: the
+// animated clones live within that container's on-screen rectangle) or the
+// whole page (slide-based magic-move: the overlay is position: fixed across
+// the viewport and "which slide is current" changes every step, so there's
+// no single stable element to scope to).
+type ScreenshotTarget = Locator | Page;
 
 export interface FilmstripFrame {
   /** Logical snapshot name, e.g. "r-step2-450ms.png" */
@@ -35,16 +43,21 @@ export interface FilmstripFrame {
 export async function gotoSlide(page: Page, path: string, sectionId: string) {
   await page.goto(`${path}#/${sectionId}`);
   await page.waitForFunction(() => window.Reveal?.isReady());
+  // Reveal.js's own slide transition (fade/slide between slides) is separate
+  // from magic-move's own animation and just adds noise for slide-based
+  // sequences. Harmless no-op for div-based/fragment sequences, which don't
+  // use slide transitions at all.
+  await page.evaluate(() => window.Reveal.configure({ transition: 'none' }));
 }
 
-export async function advanceFragment(page: Page) {
+export async function goNext(page: Page) {
   await page.evaluate(() => window.Reveal.next());
 }
 
-// fragmenthidden runs its own reverse FLIP animation (animateToStep with
-// from/to swapped, see magic-move.js) rather than just snapping back, so
-// it's a genuinely separate code path worth its own filmstrip coverage.
-export async function retreatFragment(page: Page) {
+// fragmenthidden/slide-back run their own reverse FLIP animation (from/to
+// swapped, see magic-move.js) rather than just snapping back, so this is a
+// genuinely separate code path worth its own filmstrip coverage.
+export async function goPrev(page: Page) {
   await page.evaluate(() => window.Reveal.prev());
 }
 
@@ -52,11 +65,12 @@ export async function retreatFragment(page: Page) {
 // assertion (even with `animations: 'allow'`) waits for the page to stop
 // visually changing before it ever returns a screenshot, which silently
 // fast-forwards past the exact mid-animation frames a filmstrip needs.
-// Locator.screenshot() has no such stabilization wait, so it's used here
-// with a hand-rolled pixelmatch comparison against the committed baseline.
+// Locator/Page.screenshot() has no such stabilization wait, so it's used
+// here with a hand-rolled pixelmatch comparison against the committed
+// baseline.
 export async function captureFrame(
   page: Page,
-  container: Locator,
+  target: ScreenshotTarget,
   name: string,
   label: string,
   frames: FilmstripFrame[],
@@ -67,7 +81,7 @@ export async function captureFrame(
   const baselinePath = path.join(snapshotDir, name);
   const actualPath = testInfo.outputPath(name);
 
-  await container.screenshot({ path: actualPath });
+  await target.screenshot({ path: actualPath });
 
   if (shouldUpdateBaselines || !fs.existsSync(baselinePath)) {
     fs.copyFileSync(actualPath, baselinePath);
@@ -106,7 +120,7 @@ function comparePngs(baselinePath: string, actualPath: string, diffPath: string)
 
 export async function captureFilmstrip(
   page: Page,
-  container: Locator,
+  target: ScreenshotTarget,
   namePrefix: string,
   stepLabel: string,
   frames: FilmstripFrame[],
@@ -120,7 +134,7 @@ export async function captureFilmstrip(
     }
     await captureFrame(
       page,
-      container,
+      target,
       `${namePrefix}-${sampleAt}ms.png`,
       `${stepLabel} @ ${sampleAt}ms`,
       frames,

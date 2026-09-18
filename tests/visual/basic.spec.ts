@@ -1,11 +1,11 @@
 import { test } from '@playwright/test';
 import {
-  advanceFragment,
   captureFilmstrip,
   captureFrame,
   type FilmstripFrame,
+  goNext,
+  goPrev,
   gotoSlide,
-  retreatFragment,
   writeManifest,
 } from './filmstrip';
 
@@ -22,16 +22,16 @@ test.describe('basic.qmd — div-based magic-move', () => {
 
     await captureFrame(page, container, 'r-step1-initial.png', 'Step 1 (initial)', frames, testInfo);
 
-    await advanceFragment(page);
+    await goNext(page);
     await captureFilmstrip(page, container, 'r-step2', 'Step 2', frames, testInfo);
 
-    await advanceFragment(page);
+    await goNext(page);
     await captureFilmstrip(page, container, 'r-step3', 'Step 3', frames, testInfo);
 
-    await retreatFragment(page);
+    await goPrev(page);
     await captureFilmstrip(page, container, 'r-back-step2', 'Back to step 2', frames, testInfo);
 
-    await retreatFragment(page);
+    await goPrev(page);
     await captureFilmstrip(page, container, 'r-back-step1', 'Back to step 1', frames, testInfo);
 
     writeManifest(testInfo, frames);
@@ -44,10 +44,10 @@ test.describe('basic.qmd — div-based magic-move', () => {
 
     await captureFrame(page, container, 'js-step1-initial.png', 'Step 1 (initial)', frames, testInfo);
 
-    await advanceFragment(page);
+    await goNext(page);
     await captureFilmstrip(page, container, 'js-step2', 'Step 2', frames, testInfo);
 
-    await retreatFragment(page);
+    await goPrev(page);
     await captureFilmstrip(page, container, 'js-back-step1', 'Back to step 1', frames, testInfo);
 
     writeManifest(testInfo, frames);
