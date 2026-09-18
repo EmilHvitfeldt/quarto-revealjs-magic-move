@@ -2561,13 +2561,62 @@ function assignTokenKeys(steps) {
 function matchSteps(prevStep, currStep) {
   const exactKey = (t) => `${t.content}\u0000${JSON.stringify(t.classes)}`;
   const looseKey = (t) => t.content;
+  const lineSignature = (line) => line.map(exactKey).join('\u0001');
 
-  const matchFromIndex = computeTokenAlignment(prevStep.tokens, currStep.tokens, exactKey, looseKey);
+  // Pass 0: exact whole-line moves. A pure LCS match (below) can only bind
+  // tokens that stay in the same relative order, so a swapped/reordered line
+  // — same tokens, different position — can never come out of it as a
+  // match; most of its tokens end up "new"/"removed" and fade instead of
+  // sliding. Bind such lines directly by content signature first, nearest
+  // line-index preferred to keep the pairing stable when a signature repeats.
+  const prevSigs = prevStep.lines.map(lineSignature);
+  const currSigs = currStep.lines.map(lineSignature);
+  const prevLineUsed = new Array(prevStep.lines.length).fill(false);
+  const currLineMatched = new Array(currStep.lines.length).fill(false);
 
-  for (let j = 0; j < currStep.tokens.length; j++) {
+  for (let ci = 0; ci < currStep.lines.length; ci++) {
+    const currLine = currStep.lines[ci];
+    if (currLine.length === 0) continue;
+
+    let bestPi = -1;
+    let bestDist = Infinity;
+    for (let pi = 0; pi < prevStep.lines.length; pi++) {
+      if (prevLineUsed[pi] || prevSigs[pi] !== currSigs[ci]) continue;
+      const dist = Math.abs(pi - ci);
+      if (dist < bestDist) {
+        bestDist = dist;
+        bestPi = pi;
+      }
+    }
+
+    if (bestPi !== -1) {
+      prevLineUsed[bestPi] = true;
+      currLineMatched[ci] = true;
+      const prevLine = prevStep.lines[bestPi];
+      for (let k = 0; k < currLine.length; k++) {
+        currLine[k].key = prevLine[k].key;
+      }
+    }
+  }
+
+  // Pass 1: token-level LCS alignment for whatever pass 0 didn't resolve,
+  // restricted to the unmatched lines so a moved line's tokens can't also
+  // get pulled into the diff of the genuinely edited ones.
+  const prevRemainingTokens = [];
+  for (let pi = 0; pi < prevStep.lines.length; pi++) {
+    if (!prevLineUsed[pi]) prevRemainingTokens.push(...prevStep.lines[pi]);
+  }
+  const currRemainingTokens = [];
+  for (let ci = 0; ci < currStep.lines.length; ci++) {
+    if (!currLineMatched[ci]) currRemainingTokens.push(...currStep.lines[ci]);
+  }
+
+  const matchFromIndex = computeTokenAlignment(prevRemainingTokens, currRemainingTokens, exactKey, looseKey);
+
+  for (let j = 0; j < currRemainingTokens.length; j++) {
     const i = matchFromIndex[j];
     if (i !== -1) {
-      currStep.tokens[j].key = prevStep.tokens[i].key;
+      currRemainingTokens[j].key = prevRemainingTokens[i].key;
     }
   }
 }
