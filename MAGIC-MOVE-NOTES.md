@@ -117,6 +117,52 @@ Quarto's syntax highlighting CSS uses selectors like `code span.ot`. The impleme
 
 The line wrapper `<span>` is crucial - without it, the CSS selector `pre > code.sourceCode > span` would override token colors.
 
+## Visual Regression Tests
+
+Rendered animations are covered by Playwright-based visual snapshot tests under `tests/visual/`, since the bugs that matter here (a token overshooting mid-flight, a broken SVG morph) only show up as pixel differences during the animation, not just at the settled end state.
+
+### How it works
+
+- Each `*.spec.ts` file renders an example page, triggers a magic-move step, and captures a **filmstrip**: a screenshot at each point in a fixed sample schedule (0/100/250/450/700/950ms after the trigger — see `tests/visual/filmstrip.ts`). Each sampled frame is diffed against a committed baseline PNG in the matching `*.spec.ts-snapshots/` directory.
+- Every sequence is exercised **forward and backward**: after stepping forward through all states, the test steps back down through them too (`retreatFragment()`, i.e. `Reveal.prev()`). `fragmenthidden` runs its own reverse FLIP animation (`animateToStep` with from/to swapped — see the FLIP Animation section above) rather than just snapping back, so it's a genuinely separate code path with its own failure modes, not just the forward frames played in reverse. This roughly doubles the number of baseline PNGs, which is the intended trade-off.
+- These captures deliberately do **not** use `expect(locator).toHaveScreenshot()`. That assertion waits for the page to stop visually changing before it ever returns a screenshot — regardless of its `animations` option, which only controls CSS animation/transition freezing, not this separate stabilization wait — so every "sampled" frame would silently collapse to the fully-settled end state. Instead, `captureFrame()` takes a raw `locator.screenshot()` (no stabilization wait) and diffs it against the baseline by hand with `pixelmatch`/`pngjs`, tolerating up to 2% differing pixels (`MAX_DIFF_PIXEL_RATIO` in `filmstrip.ts`) to absorb the few-ms drift real-time sampling can have between machines. Baselines are written/updated by setting `UPDATE_SNAPSHOTS=1` (see below) rather than Playwright's own `--update-snapshots` flag, since that flag only affects `toHaveScreenshot`.
+- Each filmstrip spec (e.g. `basic.spec.ts`) has a companion `*.replay.spec.ts` (e.g. `basic.replay.spec.ts`) with identical `describe`/test titles, whose only job is to trigger the same steps and wait, with **no** screenshots. It's the only place video recording is turned on (`test.use({ video: 'on' })`; the project default is `video: 'off'`). Taking ~13 raw screenshots per test while video recording is also active contends with Chromium's screencast pipeline enough to corrupt some recorded frames into solid gray/black flashes — verified by extracting the video's frames with `ffmpeg` and tiling them into a contact sheet. Splitting screenshot-taking and video-recording into separate tests eliminates that entirely. The review gallery links a replay test's video to its filmstrip counterpart's manifest by `describe` + test title (`testKey()` in `tests/visual/slug.ts`), not by which file produced it, since it's produced by a different spec file on purpose.
+- Tests render and serve from a **separate Quarto profile** (`_quarto-test.yml`, activated via `npm run render:test` → `quarto render --profile test`), not from `docs/` (the public site). This exists because `examples/mathjax.qmd` and `examples/svgs.qmd` are deliberately excluded from the public site's render list, navbar, and search index (they're "not ready yet" — see the commit that hid them) but still need real rendered HTML to test against. The test profile renders all four examples to `.quarto-test-render/` (gitignored, never committed), which Playwright's `webServer` serves. A single-file `quarto render examples/mathjax.qmd` doesn't work for a file outside the active profile's render list — Quarto falls back to standalone-document mode and can't resolve the `magic-move` reveal.js plugin — so this has to be a real (if separate) project render, not an ad hoc one.
+
+### Running locally
+
+```bash
+npm install
+npx playwright install chromium   # first time only
+npm run render:test               # quarto render --profile test, output goes to .quarto-test-render/
+npm run test:visual
+```
+
+### Reviewing filmstrips and videos in a browser
+
+`npm run test:visual` only tells you pass/fail. To actually look at what the animations do, `tools/visual-review/` builds a small static gallery page from the committed filmstrip baselines and whatever `.webm` videos your last local test run produced:
+
+```bash
+npm run test:visual   # produces the videos the gallery links to, if you haven't already
+npm run review:visual
+```
+
+This regenerates `tools/visual-review/gallery.html` and serves it at `http://127.0.0.1:4174/tools/visual-review/gallery.html`. Each test gets its own section: a scrubbable filmstrip (click a thumbnail, or hit "Play filmstrip" to flip through the sampled frames like a flipbook) next to the real recorded video for comparison. The gallery HTML itself is generated, not committed; the filmstrip images it reads from `tests/visual/*.spec.ts-snapshots/` are.
+
+### Updating baselines after an intentional visual change
+
+Font/anti-aliasing rendering differs between macOS and Linux, so baselines generated bare-metal on macOS can produce false failures in CI (which runs on Linux). Prefer one of:
+
+- **Docker (matches CI exactly):**
+  ```bash
+  docker run --rm -v "$PWD":/work -w /work -e UPDATE_SNAPSHOTS=1 mcr.microsoft.com/playwright:v1.63.0-noble \
+    npx playwright test
+  ```
+  (bump the image tag to match the installed `@playwright/test` version in `package.json`)
+- **From CI, when Docker isn't available locally:** run the "Visual regression tests" workflow manually (`workflow_dispatch`) with `update_snapshots: true`. It uploads the regenerated `*-snapshots/` files as a build artifact — download and commit them.
+
+Either way, review the changed PNGs (`git status` after replacing them) before committing, alongside the code change that caused them.
+
 ## Known Limitations
 
 1. **Token matching is imperfect** - when code changes significantly, tokens may fade in/out instead of animating smoothly

@@ -6,3 +6,11 @@
 /.quarto/
 
 **/*.quarto_ipynb
+
+node_modules/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+/tools/visual-review/gallery.html
+/.quarto-test-render/

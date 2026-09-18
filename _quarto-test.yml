@@ -1,0 +1,8 @@
+project:
+  output-dir: .quarto-test-render
+  render:
+    - index.qmd
+    - examples/basic.qmd
+    - examples/slide-based.qmd
+    - examples/mathjax.qmd
+    - examples/svgs.qmd

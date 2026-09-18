@@ -1,0 +1,24 @@
+{
+  "name": "quarto-revealjs-magic-move",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A Quarto extension that brings Magic Move-style animated transitions to revealjs presentations.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EmilHvitfeldt/quarto-revealjs-magic-move.git"
+  },
+  "scripts": {
+    "render:test": "quarto render --profile test",
+    "test:visual": "playwright test",
+    "test:visual:update": "UPDATE_SNAPSHOTS=1 playwright test",
+    "review:visual": "node tools/visual-review/build-gallery.mjs && http-server . -p 4174 -c-1 -o /tools/visual-review/gallery.html"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/pngjs": "^6.0.5",
+    "http-server": "^14.1.1",
+    "pixelmatch": "^7.2.0",
+    "pngjs": "^7.0.0"
+  }
+}
