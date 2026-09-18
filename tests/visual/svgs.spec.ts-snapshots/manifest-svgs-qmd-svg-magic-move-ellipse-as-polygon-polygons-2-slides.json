@@ -1,0 +1,58 @@
+{
+  "key": "svgs-qmd-svg-magic-move-ellipse-as-polygon-polygons-2-slides",
+  "title": "Ellipse as polygon (polygons, 2 slides)",
+  "frames": [
+    {
+      "name": "ellipse-step1-initial.png",
+      "label": "Step 1 (initial)"
+    },
+    {
+      "name": "ellipse-step2-0ms.png",
+      "label": "Step 2 @ 0ms"
+    },
+    {
+      "name": "ellipse-step2-100ms.png",
+      "label": "Step 2 @ 100ms"
+    },
+    {
+      "name": "ellipse-step2-250ms.png",
+      "label": "Step 2 @ 250ms"
+    },
+    {
+      "name": "ellipse-step2-450ms.png",
+      "label": "Step 2 @ 450ms"
+    },
+    {
+      "name": "ellipse-step2-700ms.png",
+      "label": "Step 2 @ 700ms"
+    },
+    {
+      "name": "ellipse-step2-950ms.png",
+      "label": "Step 2 @ 950ms"
+    },
+    {
+      "name": "ellipse-back-step1-0ms.png",
+      "label": "Back to step 1 @ 0ms"
+    },
+    {
+      "name": "ellipse-back-step1-100ms.png",
+      "label": "Back to step 1 @ 100ms"
+    },
+    {
+      "name": "ellipse-back-step1-250ms.png",
+      "label": "Back to step 1 @ 250ms"
+    },
+    {
+      "name": "ellipse-back-step1-450ms.png",
+      "label": "Back to step 1 @ 450ms"
+    },
+    {
+      "name": "ellipse-back-step1-700ms.png",
+      "label": "Back to step 1 @ 700ms"
+    },
+    {
+      "name": "ellipse-back-step1-950ms.png",
+      "label": "Back to step 1 @ 950ms"
+    }
+  ]
+}

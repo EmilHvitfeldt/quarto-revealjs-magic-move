@@ -1,0 +1,106 @@
+{
+  "key": "svgs-qmd-svg-magic-move-slope-points-line-3-slides",
+  "title": "Slope (points + line, 3 slides)",
+  "frames": [
+    {
+      "name": "slope-step1-initial.png",
+      "label": "Step 1 (initial)"
+    },
+    {
+      "name": "slope-step2-0ms.png",
+      "label": "Step 2 @ 0ms"
+    },
+    {
+      "name": "slope-step2-100ms.png",
+      "label": "Step 2 @ 100ms"
+    },
+    {
+      "name": "slope-step2-250ms.png",
+      "label": "Step 2 @ 250ms"
+    },
+    {
+      "name": "slope-step2-450ms.png",
+      "label": "Step 2 @ 450ms"
+    },
+    {
+      "name": "slope-step2-700ms.png",
+      "label": "Step 2 @ 700ms"
+    },
+    {
+      "name": "slope-step2-950ms.png",
+      "label": "Step 2 @ 950ms"
+    },
+    {
+      "name": "slope-step3-0ms.png",
+      "label": "Step 3 @ 0ms"
+    },
+    {
+      "name": "slope-step3-100ms.png",
+      "label": "Step 3 @ 100ms"
+    },
+    {
+      "name": "slope-step3-250ms.png",
+      "label": "Step 3 @ 250ms"
+    },
+    {
+      "name": "slope-step3-450ms.png",
+      "label": "Step 3 @ 450ms"
+    },
+    {
+      "name": "slope-step3-700ms.png",
+      "label": "Step 3 @ 700ms"
+    },
+    {
+      "name": "slope-step3-950ms.png",
+      "label": "Step 3 @ 950ms"
+    },
+    {
+      "name": "slope-back-step2-0ms.png",
+      "label": "Back to step 2 @ 0ms"
+    },
+    {
+      "name": "slope-back-step2-100ms.png",
+      "label": "Back to step 2 @ 100ms"
+    },
+    {
+      "name": "slope-back-step2-250ms.png",
+      "label": "Back to step 2 @ 250ms"
+    },
+    {
+      "name": "slope-back-step2-450ms.png",
+      "label": "Back to step 2 @ 450ms"
+    },
+    {
+      "name": "slope-back-step2-700ms.png",
+      "label": "Back to step 2 @ 700ms"
+    },
+    {
+      "name": "slope-back-step2-950ms.png",
+      "label": "Back to step 2 @ 950ms"
+    },
+    {
+      "name": "slope-back-step1-0ms.png",
+      "label": "Back to step 1 @ 0ms"
+    },
+    {
+      "name": "slope-back-step1-100ms.png",
+      "label": "Back to step 1 @ 100ms"
+    },
+    {
+      "name": "slope-back-step1-250ms.png",
+      "label": "Back to step 1 @ 250ms"
+    },
+    {
+      "name": "slope-back-step1-450ms.png",
+      "label": "Back to step 1 @ 450ms"
+    },
+    {
+      "name": "slope-back-step1-700ms.png",
+      "label": "Back to step 1 @ 700ms"
+    },
+    {
+      "name": "slope-back-step1-950ms.png",
+      "label": "Back to step 1 @ 950ms"
+    }
+  ]
+}

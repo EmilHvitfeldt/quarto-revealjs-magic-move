@@ -1,0 +1,18 @@
+{
+  "key": "svgs-qmd-svg-magic-move-bar-chart-to-pie-chart-rects-to-paths-2-slides",
+  "title": "Bar chart to pie chart (rects to paths, 2 slides)",
+  "frames": [
+    {
+      "name": "barpie-step1-initial.png",
+      "label": "Step 1 (initial)"
+    },
+    {
+      "name": "barpie-step2-settled.png",
+      "label": "Step 2 (settled)"
+    },
+    {
+      "name": "barpie-back-step1-settled.png",
+      "label": "Back to step 1 (settled)"
+    }
+  ]
+}

@@ -18,12 +18,15 @@ declare global {
 
 // Milliseconds after a step is triggered at which a frame is sampled.
 // Covers start, early/mid/late motion, and the settled end state. Real-time
-// sampling means an exact frame can drift a few ms between runs, so
-// MAX_DIFF_PIXEL_RATIO below absorbs that rather than requiring byte-exact
-// frames.
+// sampling means an exact frame can drift a few ms between runs, so a
+// diff-ratio tolerance (see captureFrame's maxDiffPixelRatio param) absorbs
+// that rather than requiring byte-exact frames. The bigger the on-screen
+// motion between two samples, the more a few ms of drift can shift the
+// diff ratio — callers with large, fast, full-page transitions may need to
+// pass a higher override than the default.
 export const SAMPLE_SCHEDULE_MS = [0, 100, 250, 450, 700, 950];
 
-const MAX_DIFF_PIXEL_RATIO = 0.04;
+const DEFAULT_MAX_DIFF_PIXEL_RATIO = 0.04;
 const shouldUpdateBaselines = process.env.UPDATE_SNAPSHOTS === '1' || process.env.UPDATE_SNAPSHOTS === 'true';
 
 // Either a locator scoped to a single container (div-based magic-move: the
@@ -48,6 +51,19 @@ export async function gotoSlide(page: Page, path: string, sectionId: string) {
   // sequences. Harmless no-op for div-based/fragment sequences, which don't
   // use slide transitions at all.
   await page.evaluate(() => window.Reveal.configure({ transition: 'none' }));
+}
+
+// initSvgMagicMove pre-inlines every magic-move slide's SVG (fetching each
+// img[data-src$=".svg"] and swapping it for a real inline <svg>) in one
+// sequential async loop over the whole document before it attaches its
+// slidechanged listener — so triggering navigation before that loop
+// finishes silently falls through to a plain slide change with no
+// animation at all. "pie-chart" is examples/svgs.qmd's last magic-move
+// slide in document order, so waiting for its SVG to be inlined is a
+// reliable proxy for "the whole page's SVG magic-move is ready",
+// regardless of which sequence a given test is about.
+export async function waitForSvgMagicMoveReady(page: Page) {
+  await page.locator('#pie-chart svg[data-inlined="true"]').waitFor({ state: 'attached' });
 }
 
 export async function goNext(page: Page) {
@@ -75,6 +91,7 @@ export async function captureFrame(
   label: string,
   frames: FilmstripFrame[],
   testInfo: TestInfo,
+  maxDiffPixelRatio: number = DEFAULT_MAX_DIFF_PIXEL_RATIO,
 ) {
   const snapshotDir = `${testInfo.file}-snapshots`;
   fs.mkdirSync(snapshotDir, { recursive: true });
@@ -87,7 +104,7 @@ export async function captureFrame(
     fs.copyFileSync(actualPath, baselinePath);
   } else {
     const diffRatio = comparePngs(baselinePath, actualPath, testInfo.outputPath(name.replace(/\.png$/, '-diff.png')));
-    if (diffRatio > MAX_DIFF_PIXEL_RATIO) {
+    if (diffRatio > maxDiffPixelRatio) {
       await testInfo.attach(`${name} (actual)`, { path: actualPath, contentType: 'image/png' });
       await testInfo.attach(`${name} (diff)`, {
         path: testInfo.outputPath(name.replace(/\.png$/, '-diff.png')),
@@ -95,7 +112,7 @@ export async function captureFrame(
       });
       throw new Error(
         `Frame "${name}" differs from baseline by ${(diffRatio * 100).toFixed(2)}% of pixels ` +
-          `(limit ${(MAX_DIFF_PIXEL_RATIO * 100).toFixed(2)}%). Baseline: ${baselinePath}`,
+          `(limit ${(maxDiffPixelRatio * 100).toFixed(2)}%). Baseline: ${baselinePath}`,
       );
     }
   }
@@ -125,6 +142,7 @@ export async function captureFilmstrip(
   stepLabel: string,
   frames: FilmstripFrame[],
   testInfo: TestInfo,
+  maxDiffPixelRatio?: number,
 ) {
   let elapsed = 0;
   for (const sampleAt of SAMPLE_SCHEDULE_MS) {
@@ -139,6 +157,7 @@ export async function captureFilmstrip(
       `${stepLabel} @ ${sampleAt}ms`,
       frames,
       testInfo,
+      maxDiffPixelRatio,
     );
   }
 }
