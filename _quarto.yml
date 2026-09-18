@@ -18,6 +18,10 @@ website:
             text: Code (fragments)
           - href: examples/slide-based.qmd
             text: Code (slides)
+    right:
+      - icon: github
+        href: https://github.com/emilhvitfeldt/quarto-revealjs-magic-move
+        aria-label: GitHub repository
 
 format:
   html:
