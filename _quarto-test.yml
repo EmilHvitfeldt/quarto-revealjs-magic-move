@@ -3,6 +3,7 @@ project:
   render:
     - index.qmd
     - examples/basic.qmd
+    - examples/code-chunk-cases.qmd
     - examples/slide-based.qmd
     - examples/mathjax.qmd
     - examples/svgs.qmd

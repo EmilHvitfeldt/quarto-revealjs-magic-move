@@ -1,0 +1,281 @@
+---
+title: Magic Move Code Chunk Cases
+format: revealjs
+revealjs-plugins:
+  - magic-move
+---
+
+## Line insertion
+
+::: magic-move
+
+```r
+a <- 1
+b <- 2
+d <- 4
+```
+
+```r
+a <- 1
+b <- 2
+c <- 3
+d <- 4
+```
+
+:::
+
+## Line deletion
+
+::: magic-move
+
+```r
+a <- 1
+b <- 2
+c <- 3
+d <- 4
+```
+
+```r
+a <- 1
+b <- 2
+d <- 4
+```
+
+:::
+
+## Token rename
+
+::: magic-move
+
+```r
+total <- sum(values)
+mean_val <- total / length(values)
+print(mean_val)
+```
+
+```r
+grand_total <- sum(values)
+mean_val <- grand_total / length(values)
+print(mean_val)
+```
+
+:::
+
+## Indentation only change
+
+::: magic-move
+
+```r
+x <- 1
+y <- 2
+```
+
+```r
+if (TRUE) {
+  x <- 1
+  y <- 2
+}
+```
+
+:::
+
+## Line reorder
+
+::: magic-move
+
+```r
+b <- 2
+a <- 1
+```
+
+```r
+a <- 1
+b <- 2
+```
+
+:::
+
+## Pipe extraction
+
+::: magic-move
+
+```r
+result <- data
+```
+
+```r
+result <- data %>%
+  filter(x > 0)
+```
+
+```r
+result <- data %>%
+  filter(x > 0) %>%
+  select(x, y)
+```
+
+:::
+
+## Pipe collapse
+
+::: magic-move
+
+```r
+result <- data %>%
+  filter(x > 0) %>%
+  select(x, y)
+```
+
+```r
+result <- data %>%
+  filter(x > 0)
+```
+
+```r
+result <- data
+```
+
+:::
+
+## Single line to multi line wrap
+
+::: magic-move
+
+```r
+model <- lm(mpg ~ wt + hp + qsec, data = mtcars)
+```
+
+```r
+model <- lm(
+  mpg ~ wt + hp + qsec,
+  data = mtcars
+)
+```
+
+:::
+
+## Comment only change
+
+::: magic-move
+
+```r
+# compute the mean
+x <- mean(values)
+```
+
+```r
+# compute the arithmetic mean
+x <- mean(values)
+```
+
+:::
+
+## Literal value change
+
+::: magic-move
+
+```r
+n <- 10
+threshold <- n * 2
+```
+
+```r
+n <- 100
+threshold <- n * 2
+```
+
+:::
+
+## Duplicate lines one edited
+
+::: magic-move
+
+```r
+x <- 1
+y <- 1
+z <- 1
+```
+
+```r
+x <- 1
+y <- 2
+z <- 1
+```
+
+:::
+
+## Whitespace only change
+
+::: magic-move
+
+```r
+a <- 1
+b <- 2
+```
+
+```r
+a <- 1
+
+b <- 2
+```
+
+:::
+
+## Unrelated rewrite
+
+::: magic-move
+
+```r
+a <- 1
+b <- 2
+c <- 3
+```
+
+```r
+library(dplyr)
+data %>%
+  group_by(category) %>%
+  summarise(total = sum(value))
+```
+
+:::
+
+## Large block small diff
+
+::: magic-move
+
+```r
+process_data <- function(df) {
+  df <- df %>%
+    filter(!is.na(value))
+  df <- df %>%
+    mutate(value = value * 1)
+  df <- df %>%
+    group_by(category) %>%
+    summarise(total = sum(value))
+  df <- df %>%
+    arrange(desc(total))
+  df <- df %>%
+    mutate(rank = row_number())
+  return(df)
+}
+```
+
+```r
+process_data <- function(df) {
+  df <- df %>%
+    filter(!is.na(value))
+  df <- df %>%
+    mutate(value = value * 100)
+  df <- df %>%
+    group_by(category) %>%
+    summarise(total = sum(value))
+  df <- df %>%
+    arrange(desc(total))
+  df <- df %>%
+    mutate(rank = row_number())
+  return(df)
+}
+```
+
+:::

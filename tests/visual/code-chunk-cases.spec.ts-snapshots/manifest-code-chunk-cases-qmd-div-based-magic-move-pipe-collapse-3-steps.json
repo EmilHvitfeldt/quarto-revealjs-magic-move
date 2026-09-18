@@ -1,0 +1,106 @@
+{
+  "key": "code-chunk-cases-qmd-div-based-magic-move-pipe-collapse-3-steps",
+  "title": "pipe collapse (3 steps)",
+  "frames": [
+    {
+      "name": "pipe-collapse-step1-initial.png",
+      "label": "Step 1 (initial)"
+    },
+    {
+      "name": "pipe-collapse-step2-0ms.png",
+      "label": "Step 2 @ 0ms"
+    },
+    {
+      "name": "pipe-collapse-step2-100ms.png",
+      "label": "Step 2 @ 100ms"
+    },
+    {
+      "name": "pipe-collapse-step2-250ms.png",
+      "label": "Step 2 @ 250ms"
+    },
+    {
+      "name": "pipe-collapse-step2-450ms.png",
+      "label": "Step 2 @ 450ms"
+    },
+    {
+      "name": "pipe-collapse-step2-700ms.png",
+      "label": "Step 2 @ 700ms"
+    },
+    {
+      "name": "pipe-collapse-step2-950ms.png",
+      "label": "Step 2 @ 950ms"
+    },
+    {
+      "name": "pipe-collapse-step3-0ms.png",
+      "label": "Step 3 @ 0ms"
+    },
+    {
+      "name": "pipe-collapse-step3-100ms.png",
+      "label": "Step 3 @ 100ms"
+    },
+    {
+      "name": "pipe-collapse-step3-250ms.png",
+      "label": "Step 3 @ 250ms"
+    },
+    {
+      "name": "pipe-collapse-step3-450ms.png",
+      "label": "Step 3 @ 450ms"
+    },
+    {
+      "name": "pipe-collapse-step3-700ms.png",
+      "label": "Step 3 @ 700ms"
+    },
+    {
+      "name": "pipe-collapse-step3-950ms.png",
+      "label": "Step 3 @ 950ms"
+    },
+    {
+      "name": "pipe-collapse-back-step2-0ms.png",
+      "label": "Back to step 2 @ 0ms"
+    },
+    {
+      "name": "pipe-collapse-back-step2-100ms.png",
+      "label": "Back to step 2 @ 100ms"
+    },
+    {
+      "name": "pipe-collapse-back-step2-250ms.png",
+      "label": "Back to step 2 @ 250ms"
+    },
+    {
+      "name": "pipe-collapse-back-step2-450ms.png",
+      "label": "Back to step 2 @ 450ms"
+    },
+    {
+      "name": "pipe-collapse-back-step2-700ms.png",
+      "label": "Back to step 2 @ 700ms"
+    },
+    {
+      "name": "pipe-collapse-back-step2-950ms.png",
+      "label": "Back to step 2 @ 950ms"
+    },
+    {
+      "name": "pipe-collapse-back-step1-0ms.png",
+      "label": "Back to step 1 @ 0ms"
+    },
+    {
+      "name": "pipe-collapse-back-step1-100ms.png",
+      "label": "Back to step 1 @ 100ms"
+    },
+    {
+      "name": "pipe-collapse-back-step1-250ms.png",
+      "label": "Back to step 1 @ 250ms"
+    },
+    {
+      "name": "pipe-collapse-back-step1-450ms.png",
+      "label": "Back to step 1 @ 450ms"
+    },
+    {
+      "name": "pipe-collapse-back-step1-700ms.png",
+      "label": "Back to step 1 @ 700ms"
+    },
+    {
+      "name": "pipe-collapse-back-step1-950ms.png",
+      "label": "Back to step 1 @ 950ms"
+    }
+  ]
+}

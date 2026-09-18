@@ -1,0 +1,58 @@
+{
+  "key": "code-chunk-cases-qmd-div-based-magic-move-large-block-small-diff",
+  "title": "large block small diff",
+  "frames": [
+    {
+      "name": "large-block-small-diff-step1-initial.png",
+      "label": "Step 1 (initial)"
+    },
+    {
+      "name": "large-block-small-diff-step2-0ms.png",
+      "label": "Step 2 @ 0ms"
+    },
+    {
+      "name": "large-block-small-diff-step2-100ms.png",
+      "label": "Step 2 @ 100ms"
+    },
+    {
+      "name": "large-block-small-diff-step2-250ms.png",
+      "label": "Step 2 @ 250ms"
+    },
+    {
+      "name": "large-block-small-diff-step2-450ms.png",
+      "label": "Step 2 @ 450ms"
+    },
+    {
+      "name": "large-block-small-diff-step2-700ms.png",
+      "label": "Step 2 @ 700ms"
+    },
+    {
+      "name": "large-block-small-diff-step2-950ms.png",
+      "label": "Step 2 @ 950ms"
+    },
+    {
+      "name": "large-block-small-diff-back-step1-0ms.png",
+      "label": "Back to step 1 @ 0ms"
+    },
+    {
+      "name": "large-block-small-diff-back-step1-100ms.png",
+      "label": "Back to step 1 @ 100ms"
+    },
+    {
+      "name": "large-block-small-diff-back-step1-250ms.png",
+      "label": "Back to step 1 @ 250ms"
+    },
+    {
+      "name": "large-block-small-diff-back-step1-450ms.png",
+      "label": "Back to step 1 @ 450ms"
+    },
+    {
+      "name": "large-block-small-diff-back-step1-700ms.png",
+      "label": "Back to step 1 @ 700ms"
+    },
+    {
+      "name": "large-block-small-diff-back-step1-950ms.png",
+      "label": "Back to step 1 @ 950ms"
+    }
+  ]
+}
