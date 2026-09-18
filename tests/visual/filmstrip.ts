@@ -134,7 +134,12 @@ function comparePngs(baselinePath: string, actualPath: string, diffPath: string)
   const { width, height } = baseline;
 
   if (actual.width !== width || actual.height !== height) {
-    return 1; // dimension mismatch: treat as a full diff rather than throwing
+    // A pixel-by-pixel overlay isn't meaningful across differing
+    // dimensions, but callers unconditionally attach whatever's at
+    // diffPath on failure — write the actual as a stand-in so that
+    // doesn't ENOENT.
+    fs.copyFileSync(actualPath, diffPath);
+    return 1;
   }
 
   const diff = new PNG({ width, height });
