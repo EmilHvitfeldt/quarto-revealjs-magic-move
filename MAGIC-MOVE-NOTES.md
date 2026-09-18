@@ -136,6 +136,8 @@ Rendered animations are covered by Playwright-based visual snapshot tests under 
 
 ### Running locally
 
+Needs R with the `ggplot2` package installed (base R's `grid` is enough for the grid-graphics examples): `examples/svgs.qmd` has real executable `{r}` chunks that `quarto render` actually runs to produce its `dev: svg` output, unlike `basic.qmd`/`slide-based.qmd`, which only show *static* R-highlighted code text and never execute it.
+
 ```bash
 npm install
 npx playwright install chromium   # first time only
