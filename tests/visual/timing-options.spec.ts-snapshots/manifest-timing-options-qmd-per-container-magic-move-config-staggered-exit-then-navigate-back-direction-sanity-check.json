@@ -1,0 +1,30 @@
+{
+  "key": "timing-options-qmd-per-container-magic-move-config-staggered-exit-then-navigate-back-direction-sanity-check",
+  "title": "staggered exit, then navigate back (direction sanity check)",
+  "frames": [
+    {
+      "name": "staggered-exit-back-to-step1-0ms.png",
+      "label": "Back to step 1 @ 0ms"
+    },
+    {
+      "name": "staggered-exit-back-to-step1-100ms.png",
+      "label": "Back to step 1 @ 100ms"
+    },
+    {
+      "name": "staggered-exit-back-to-step1-250ms.png",
+      "label": "Back to step 1 @ 250ms"
+    },
+    {
+      "name": "staggered-exit-back-to-step1-450ms.png",
+      "label": "Back to step 1 @ 450ms"
+    },
+    {
+      "name": "staggered-exit-back-to-step1-700ms.png",
+      "label": "Back to step 1 @ 700ms"
+    },
+    {
+      "name": "staggered-exit-back-to-step1-950ms.png",
+      "label": "Back to step 1 @ 950ms"
+    }
+  ]
+}
