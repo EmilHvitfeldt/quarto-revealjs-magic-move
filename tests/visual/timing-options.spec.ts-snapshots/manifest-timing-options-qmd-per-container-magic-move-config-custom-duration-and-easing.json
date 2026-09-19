@@ -1,0 +1,38 @@
+{
+  "key": "timing-options-qmd-per-container-magic-move-config-custom-duration-and-easing",
+  "title": "custom duration and easing",
+  "frames": [
+    {
+      "name": "custom-duration-step1-initial.png",
+      "label": "Step 1 (initial)"
+    },
+    {
+      "name": "custom-duration-step2-0ms.png",
+      "label": "Step 2 (duration: 1200ms) @ 0ms"
+    },
+    {
+      "name": "custom-duration-step2-100ms.png",
+      "label": "Step 2 (duration: 1200ms) @ 100ms"
+    },
+    {
+      "name": "custom-duration-step2-250ms.png",
+      "label": "Step 2 (duration: 1200ms) @ 250ms"
+    },
+    {
+      "name": "custom-duration-step2-450ms.png",
+      "label": "Step 2 (duration: 1200ms) @ 450ms"
+    },
+    {
+      "name": "custom-duration-step2-700ms.png",
+      "label": "Step 2 (duration: 1200ms) @ 700ms"
+    },
+    {
+      "name": "custom-duration-step2-950ms.png",
+      "label": "Step 2 (duration: 1200ms) @ 950ms"
+    },
+    {
+      "name": "custom-duration-step2-1250ms.png",
+      "label": "Step 2 settled @ 1250ms"
+    }
+  ]
+}

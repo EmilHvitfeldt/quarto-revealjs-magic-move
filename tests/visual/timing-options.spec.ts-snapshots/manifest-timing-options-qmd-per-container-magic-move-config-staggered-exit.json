@@ -1,0 +1,34 @@
+{
+  "key": "timing-options-qmd-per-container-magic-move-config-staggered-exit",
+  "title": "staggered exit",
+  "frames": [
+    {
+      "name": "staggered-exit-step1-initial.png",
+      "label": "Step 1 (initial)"
+    },
+    {
+      "name": "staggered-exit-step2-0ms.png",
+      "label": "Step 2 (stagger: 0.3) @ 0ms"
+    },
+    {
+      "name": "staggered-exit-step2-100ms.png",
+      "label": "Step 2 (stagger: 0.3) @ 100ms"
+    },
+    {
+      "name": "staggered-exit-step2-250ms.png",
+      "label": "Step 2 (stagger: 0.3) @ 250ms"
+    },
+    {
+      "name": "staggered-exit-step2-450ms.png",
+      "label": "Step 2 (stagger: 0.3) @ 450ms"
+    },
+    {
+      "name": "staggered-exit-step2-700ms.png",
+      "label": "Step 2 (stagger: 0.3) @ 700ms"
+    },
+    {
+      "name": "staggered-exit-step2-950ms.png",
+      "label": "Step 2 (stagger: 0.3) @ 950ms"
+    }
+  ]
+}

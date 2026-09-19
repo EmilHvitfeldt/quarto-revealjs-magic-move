@@ -1,0 +1,34 @@
+{
+  "key": "timing-options-qmd-per-container-magic-move-config-delayed-enter",
+  "title": "delayed enter",
+  "frames": [
+    {
+      "name": "delayed-enter-step1-initial.png",
+      "label": "Step 1 (initial)"
+    },
+    {
+      "name": "delayed-enter-step2-0ms.png",
+      "label": "Step 2 (delay-enter: 0.6) @ 0ms"
+    },
+    {
+      "name": "delayed-enter-step2-100ms.png",
+      "label": "Step 2 (delay-enter: 0.6) @ 100ms"
+    },
+    {
+      "name": "delayed-enter-step2-250ms.png",
+      "label": "Step 2 (delay-enter: 0.6) @ 250ms"
+    },
+    {
+      "name": "delayed-enter-step2-450ms.png",
+      "label": "Step 2 (delay-enter: 0.6) @ 450ms"
+    },
+    {
+      "name": "delayed-enter-step2-700ms.png",
+      "label": "Step 2 (delay-enter: 0.6) @ 700ms"
+    },
+    {
+      "name": "delayed-enter-step2-950ms.png",
+      "label": "Step 2 (delay-enter: 0.6) @ 950ms"
+    }
+  ]
+}

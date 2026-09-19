@@ -1,0 +1,82 @@
+---
+title: Magic Move Timing Options
+format: revealjs
+revealjs-plugins:
+  - magic-move
+---
+
+## Default timing (baseline for comparison)
+
+::: magic-move
+
+```r
+a <- 1
+b <- 2
+d <- 4
+```
+
+```r
+a <- 1
+b <- 2
+c <- 3
+d <- 4
+```
+
+:::
+
+## Staggered exit {.smaller}
+
+Deleted tokens fade out one after another instead of all at once.
+
+::: {.magic-move delay-exit="0" stagger="0.3"}
+
+```r
+a <- 1
+b <- 2
+c <- 3
+d <- 4
+```
+
+```r
+a <- 1
+d <- 4
+```
+
+:::
+
+## Delayed enter
+
+New tokens wait until moves/exits are mostly done before fading in.
+
+::: {.magic-move delay-enter="0.6"}
+
+```r
+a <- 1
+d <- 4
+```
+
+```r
+a <- 1
+b <- 2
+c <- 3
+d <- 4
+```
+
+:::
+
+## Slower, custom-eased transition
+
+::: {.magic-move duration="1200" easing="ease-out"}
+
+```r
+a <- 1
+b <- 2
+```
+
+```r
+a <- 1
+b <- 2
+c <- 3
+```
+
+:::
