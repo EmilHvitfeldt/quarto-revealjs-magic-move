@@ -2930,7 +2930,23 @@ function suppressMathClipping(root) {
 // Extract leaf elements (direct text, no element children) from a rendered math container
 function getMathLeafElements(root) {
   const leaves = [];
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, {
+    acceptNode(node) {
+      // MathJax 2 renders a visually-hidden screen-reader-only duplicate of
+      // the whole equation (.MJX_Assistive_MathML, using the classic
+      // position:absolute + clip:rect(1px,1px,1px,1px) trick) alongside the
+      // visible glyphs. It carries the same text content as the real glyphs
+      // (e.g. "y", "x") but sits at unrelated screen coordinates, so if a
+      // leaf came from here, text-based matching could pair a visible glyph
+      // with this duplicate's position instead of its real prior spot,
+      // producing a bogus FLIP delta. Reject the whole subtree so it's never
+      // collected as a leaf.
+      if (node.classList?.contains('MJX_Assistive_MathML') || node.classList?.contains('MathJax_Preview')) {
+        return NodeFilter.FILTER_REJECT;
+      }
+      return NodeFilter.FILTER_ACCEPT;
+    },
+  });
   let node = walker.nextNode();
   while (node) {
     const children = Array.from(node.childNodes);
