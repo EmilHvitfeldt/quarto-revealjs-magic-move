@@ -127,6 +127,44 @@ test('stagger cascades across successive groups of the same type, one op at a ti
   assert.equal(byKey.line4.startMs, 1300);
 });
 
+test('reverse mirrors the timeline: last-to-start plays first', () => {
+  // Same shape as the "remove line 2, then line 3, then move" case, but this is what
+  // backward navigation through it produces: buildAnimationPlan(fromStep=short,
+  // toStep=full) naturally turns the removed lines into enter ops (they're
+  // reappearing) - reverse should make the move happen first and the enter groups
+  // replay in reverse order (last-removed reappears first), not just relabel them.
+  const plan = [
+    { type: 'move', key: 'line4' },
+    { type: 'enter', keys: ['line2-a', 'line2-b'] },
+    { type: 'enter', keys: ['line3-a', 'line3-b'] },
+  ];
+  const scheduled = scheduleAnimationPlan(plan, { duration: 1000, stagger: 0.3, delayMove: 1.3, reverse: true });
+  const byKey = Object.fromEntries(scheduled.map(e => [e.key, e]));
+
+  assert.equal(byKey.line4.startMs, 0);
+  assert.equal(byKey['line3-a'].startMs, 1000);
+  assert.equal(byKey['line3-b'].startMs, 1000);
+  assert.equal(byKey['line2-a'].startMs, 1300);
+  assert.equal(byKey['line2-b'].startMs, 1300);
+  // line3 (the one removed *last* going forward) starts reappearing before line2.
+  assert.ok(byKey['line3-a'].startMs < byKey['line2-a'].startMs);
+});
+
+test('reverse is a no-op when every op already starts simultaneously', () => {
+  const plan = [
+    { type: 'exit', keys: ['a'] },
+    { type: 'move', key: 'b' },
+    { type: 'enter', keys: ['c'] },
+  ];
+  const forward = scheduleAnimationPlan(plan, { duration: 500 });
+  const reversed = scheduleAnimationPlan(plan, { duration: 500, reverse: true });
+  assert.deepEqual(reversed, forward);
+});
+
+test('reverse on an empty plan returns an empty schedule', () => {
+  assert.deepEqual(scheduleAnimationPlan([], { reverse: true }), []);
+});
+
 test('delayContainer adds a uniform base to every op, on top of its own delay', () => {
   const plan = [
     { type: 'exit', keys: ['a'] },

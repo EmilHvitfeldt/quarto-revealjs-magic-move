@@ -102,8 +102,14 @@ function initSlideBasedMagicMove(deck) {
     // Only animate if both slides are in the same sequence
     if (!fromStep || !toStep || fromSequence !== toSequence) return;
 
+    // Reverse means navigating to an earlier step in the sequence, regardless of
+    // which physical direction the user pressed (deck-level looping/jumps aside) -
+    // used the same way as the div-based path's `reverse` option, to mirror the
+    // scheduled timeline rather than just relabel enter/exit.
+    const reverse = Number(toSlide.dataset.magicStep) < Number(fromSlide.dataset.magicStep);
+
     isAnimating = true;
-    animateSlideMagicMove(fromSlide, toSlide, fromStep, toStep, overlay, deck, fromSequence.options, () => {
+    animateSlideMagicMove(fromSlide, toSlide, fromStep, toStep, overlay, deck, { ...fromSequence.options, reverse }, () => {
       isAnimating = false;
     });
   });
@@ -2498,7 +2504,7 @@ function initDivBasedMagicMove(deck) {
       if (slide.contains(event.fragment) && event.fragment.classList.contains('magic-move-step')) {
         currentStep--;
         if (currentStep >= 0) {
-          animateToStep(renderTarget, steps[currentStep + 1], steps[currentStep], magicMoveOptions);
+          animateToStep(renderTarget, steps[currentStep + 1], steps[currentStep], { ...magicMoveOptions, reverse: true });
         }
       }
     });
@@ -2891,6 +2897,9 @@ function buildAnimationPlan(fromStep, toStep) {
 // subsystems with a separate container-level animation (e.g. the slide-based path's
 // height transition) that all token ops should wait on by default; the div-based path
 // has no such container animation, hence its default of 0.
+// `reverse` mirrors the whole computed timeline (see below) — pass `true` when this plan
+// is for a backward-navigation transition, so the choreography plays out time-reversed
+// instead of just relabeling which ops are enter vs. exit.
 //
 // With every option at its default (0), every token gets startMs 0 and the same
 // duration/easing — i.e. everything plays back simultaneously, matching the pre-plan
@@ -2906,6 +2915,7 @@ function scheduleAnimationPlan(plan, options = {}) {
     delayMove = 0,
     delayEnter = 0,
     stagger = 0,
+    reverse = false,
   } = options;
 
   const groupBaseDelay = { exit: delayExit, enter: delayEnter };
@@ -2931,7 +2941,21 @@ function scheduleAnimationPlan(plan, options = {}) {
     }
   }
 
-  return scheduled;
+  if (!reverse || scheduled.length === 0) return scheduled;
+
+  // `fromStep`/`toStep` always mean "currently on screen" / "becoming visible" (see
+  // buildAnimationPlan's caller sites), so enter/exit/move are already the right *kind*
+  // of op regardless of navigation direction. But the choreography's *order* still needs
+  // reversing: forward, "line 2 exits, then line 3 exits, then line 4 moves" should play
+  // backward as "line 4 moves, then line 3 re-enters, then line 2 re-enters" - the moves
+  // that happened last should happen first, and re-entries should replay in reverse order.
+  // Reflecting every start time around the end of the timeline achieves exactly that
+  // (mirror image in time) without needing separate reverse-specific ordering logic.
+  const timelineEnd = Math.max(...scheduled.map(entry => entry.startMs + entry.durationMs));
+  return scheduled.map(entry => ({
+    ...entry,
+    startMs: timelineEnd - (entry.startMs + entry.durationMs),
+  }));
 }
 
 function renderStep(container, step) {
