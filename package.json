@@ -9,6 +9,7 @@
     "url": "git+https://github.com/EmilHvitfeldt/quarto-revealjs-magic-move.git"
   },
   "scripts": {
+    "test:unit": "node --test tests/unit/*.test.js",
     "render:test": "quarto render --profile test",
     "test:visual": "playwright test",
     "test:visual:update": "UPDATE_SNAPSHOTS=1 playwright test",

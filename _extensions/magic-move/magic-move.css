@@ -25,12 +25,15 @@
   display: inline-block;
 }
 
+/* Enter/exit animations for the div-based code path (this selector) are driven directly
+ * via the Web Animations API (see buildAnimationPlan/scheduleAnimationPlan/animateToStep in
+ * magic-move.js) so their timing can be scheduled/staggered per-container. `[data-entering]`
+ * is set as a semantic marker only here; `animation: none` is applied inline alongside it to
+ * make sure this rule never fires and double-animates. There is no `[data-leaving]` rule:
+ * exiting tokens are cloned onto a separate overlay layer and animated there instead.
+ * (The slide-based path further down still uses the `magic-enter` keyframes directly.) */
 .magic-move .magic-move-render span span[data-entering] {
-  animation: magic-enter 0.5s ease-in-out;
-}
-
-.magic-move .magic-move-render span span[data-leaving] {
-  animation: magic-leave 0.5s ease-in-out forwards;
+  animation: none;
 }
 
 @keyframes magic-enter {
@@ -41,15 +44,6 @@
   to {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-
-@keyframes magic-leave {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
   }
 }
 

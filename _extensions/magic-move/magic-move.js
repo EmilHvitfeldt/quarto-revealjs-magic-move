@@ -6,18 +6,22 @@
  * 1. Div-based: Multiple code blocks in a ::: magic-move container (fragments)
  * 2. Slide-based: Consecutive slides with {.magic-move} class
  */
-window.RevealMagicMove = window.RevealMagicMove || {
-  id: 'magic-move',
+// `window` only exists in the browser; guarded so this file can also be `require()`d
+// from `node --test` unit tests that exercise the DOM-free plan/schedule functions below.
+if (typeof window !== 'undefined') {
+  window.RevealMagicMove = window.RevealMagicMove || {
+    id: 'magic-move',
 
-  init: function(deck) {
-    deck.on('ready', async function() {
-      initDivBasedMagicMove(deck);
-      initSlideBasedMagicMove(deck);
-      await initSvgMagicMove(deck);
-      await initDivBasedMathMagicMove(deck);
-    });
-  }
-};
+    init: function(deck) {
+      deck.on('ready', async function() {
+        initDivBasedMagicMove(deck);
+        initSlideBasedMagicMove(deck);
+        await initSvgMagicMove(deck);
+        await initDivBasedMathMagicMove(deck);
+      });
+    }
+  };
+}
 
 // =============================================================================
 // SLIDE-BASED MAGIC MOVE
@@ -2280,6 +2284,27 @@ function reconstructPath(parsed) {
 // DIV-BASED MAGIC MOVE (existing implementation)
 // =============================================================================
 
+// Merge deck-wide `Reveal.initialize({ magicMove: {...} })` defaults with a per-container
+// override read from the fenced div's own attributes (e.g. `{.magic-move delay-enter="0.3"}`,
+// exposed on `container.dataset.delayEnter`). Per-container wins. One merged config applies
+// to every step transition inside that container — no per-step override.
+function resolveMagicMoveOptions(deck, container) {
+  const deckOptions = deck.getConfig().magicMove || {};
+  const containerOptions = {};
+  const numericKeys = ['duration', 'delayExit', 'delayMove', 'delayEnter', 'stagger'];
+
+  for (const key of numericKeys) {
+    if (container.dataset[key] !== undefined) {
+      containerOptions[key] = Number(container.dataset[key]);
+    }
+  }
+  if (container.dataset.easing !== undefined) {
+    containerOptions.easing = container.dataset.easing;
+  }
+
+  return { ...deckOptions, ...containerOptions };
+}
+
 function initDivBasedMagicMove(deck) {
   const containers = document.querySelectorAll('.magic-move:not(section)');
 
@@ -2367,13 +2392,14 @@ function initDivBasedMagicMove(deck) {
     renderStep(renderTarget, steps[0]);
 
     const slide = container.closest('section');
+    const magicMoveOptions = resolveMagicMoveOptions(deck, container);
 
     // Handle fragment navigation
     deck.on('fragmentshown', (event) => {
       if (slide.contains(event.fragment) && event.fragment.classList.contains('magic-move-step')) {
         currentStep++;
         if (currentStep < steps.length) {
-          animateToStep(renderTarget, steps[currentStep - 1], steps[currentStep]);
+          animateToStep(renderTarget, steps[currentStep - 1], steps[currentStep], magicMoveOptions);
         }
       }
     });
@@ -2382,7 +2408,7 @@ function initDivBasedMagicMove(deck) {
       if (slide.contains(event.fragment) && event.fragment.classList.contains('magic-move-step')) {
         currentStep--;
         if (currentStep >= 0) {
-          animateToStep(renderTarget, steps[currentStep + 1], steps[currentStep]);
+          animateToStep(renderTarget, steps[currentStep + 1], steps[currentStep], magicMoveOptions);
         }
       }
     });
@@ -2712,6 +2738,105 @@ function computeLCSAnchors(fromTokens, toTokens, keyFn) {
   return anchors;
 }
 
+// Turn a match result (fromStep/toStep tokens already keyed by matchSteps) into an
+// ordered list of typed operations describing *what* happens, decoupled from *when*.
+// Pure data transformation: no DOM access, so this is unit-testable in isolation.
+//
+//   { type: 'exit', keys: string[] }   — contiguous run (within one old line) of removed tokens
+//   { type: 'move', key: string }      — one matched token, FLIP translate
+//   { type: 'enter', keys: string[] }  — contiguous run (within one new line) of new tokens
+//
+// Batching never spans two lines, even if the runs are adjacent in overall render order,
+// so a run stays tied to the line it visually belongs to.
+function buildAnimationPlan(fromStep, toStep) {
+  const toKeys = new Set(toStep.tokens.map(t => t.key));
+  const fromKeys = new Set(fromStep.tokens.map(t => t.key));
+  const plan = [];
+
+  for (const line of fromStep.lines) {
+    let run = [];
+    for (const token of line) {
+      if (!toKeys.has(token.key)) {
+        run.push(token.key);
+      } else if (run.length) {
+        plan.push({ type: 'exit', keys: run });
+        run = [];
+      }
+    }
+    if (run.length) plan.push({ type: 'exit', keys: run });
+  }
+
+  for (const line of toStep.lines) {
+    let run = [];
+    for (const token of line) {
+      if (!fromKeys.has(token.key)) {
+        run.push(token.key);
+        continue;
+      }
+      if (run.length) {
+        plan.push({ type: 'enter', keys: run });
+        run = [];
+      }
+      plan.push({ type: 'move', key: token.key });
+    }
+    if (run.length) plan.push({ type: 'enter', keys: run });
+  }
+
+  return plan;
+}
+
+// Resolve an animation plan into per-token timing: an ordered ("op", "key", "startMs",
+// "durationMs", "easing") list. Pure data/math, no DOM. `delayExit`/`delayMove`/`delayEnter`
+// are ratios of `duration` (consistent with shiki's magic-move convention), so e.g.
+// `delayEnter: 0.3` starts entering tokens 30% of the duration after exits/moves begin.
+// `stagger` cascades tokens *within* a single exit/enter group only (ratio of duration
+// per token index in the group); it never cascades across groups or the whole plan.
+//
+// With every option at its default (0), every token gets startMs 0 and the same
+// duration/easing — i.e. everything plays back simultaneously, matching the pre-plan
+// behavior exactly for moves/enters. Exits are a deliberate exception: they previously
+// had no animation at all (removed tokens vanished instantly), so scheduling them here
+// is what gives them a real fade for the first time.
+function scheduleAnimationPlan(plan, options = {}) {
+  const {
+    duration = 500,
+    easing = 'ease-in-out',
+    delayExit = 0,
+    delayMove = 0,
+    delayEnter = 0,
+    stagger = 0,
+  } = options;
+
+  const groupBaseDelay = { exit: delayExit, enter: delayEnter };
+  const scheduled = [];
+
+  for (const op of plan) {
+    if (op.type === 'move') {
+      scheduled.push({
+        type: 'move',
+        key: op.key,
+        startMs: delayMove * duration,
+        durationMs: duration,
+        easing,
+      });
+      continue;
+    }
+
+    const baseMs = groupBaseDelay[op.type] * duration;
+    op.keys.forEach((key, i) => {
+      scheduled.push({
+        type: op.type,
+        key,
+        startMs: baseMs + i * stagger * duration,
+        durationMs: duration,
+        easing,
+      });
+    });
+  }
+
+  return scheduled;
+}
+
 function renderStep(container, step) {
   container.innerHTML = '';
 
@@ -2739,10 +2864,7 @@ function renderStep(container, step) {
   }
 }
 
-function animateToStep(container, fromStep, toStep) {
-  const fromKeys = new Set(fromStep.tokens.map(t => t.key));
-  const toKeys = new Set(toStep.tokens.map(t => t.key));
-
+function animateToStep(container, fromStep, toStep, options = {}) {
   // reveal.js scales the whole .slides container to fit the viewport via a CSS
   // transform. getBoundingClientRect() returns already-scaled screen coordinates,
   // but a transform we apply to a token (a descendant of that scaled container)
@@ -2751,50 +2873,70 @@ function animateToStep(container, fromStep, toStep) {
   // instead of only `scale` of it (which otherwise makes the animation look like
   // it "jumps" most of the way instantly whenever the deck isn't at 1:1 scale).
   const scale = getRevealScale();
+  const wrapper = container.closest('.magic-move-wrapper') || container.parentElement;
 
-  // FLIP: First - record current positions
+  // FLIP: First - record current positions (and keep the live span around, since
+  // exit clones need to copy its rendered content before it's wiped below).
   const oldPositions = new Map();
   const currentSpans = container.querySelectorAll('span > span[data-key]');
   for (const span of currentSpans) {
-    const rect = span.getBoundingClientRect();
-    oldPositions.set(span.dataset.key, { x: rect.left, y: rect.top });
+    oldPositions.set(span.dataset.key, { rect: span.getBoundingClientRect(), span });
+  }
+
+  // Plan: what happens (exit/move/enter), independent of the DOM.
+  // Schedule: when each of those happens, from the (possibly per-container) timing config.
+  const plan = buildAnimationPlan(fromStep, toStep);
+  const scheduleByKey = new Map(
+    scheduleAnimationPlan(plan, options).map(entry => [entry.key, entry])
+  );
+  const defaultSchedule = { startMs: 0, durationMs: 500, easing: 'ease-in-out' };
+
+  // Removed tokens are about to be wiped by the DOM swap below, so clone them onto an
+  // absolutely-positioned overlay layer *before* the swap and let the clones fade out
+  // independently. This is what gives exits a real animation instead of vanishing
+  // instantly: the new layout below already reflects the closed gap, and the exiting
+  // clone is a decoupled ghost fading on top of it.
+  const wrapperRect = wrapper.getBoundingClientRect();
+  for (const op of plan) {
+    if (op.type !== 'exit') continue;
+    for (const key of op.keys) {
+      const old = oldPositions.get(key);
+      if (!old) continue;
+      const sched = scheduleByKey.get(key) || defaultSchedule;
+
+      const clone = old.span.cloneNode(true);
+      clone.removeAttribute('data-key');
+      clone.style.position = 'absolute';
+      clone.style.margin = '0';
+      clone.style.pointerEvents = 'none';
+      clone.style.left = `${(old.rect.left - wrapperRect.left) / scale}px`;
+      clone.style.top = `${(old.rect.top - wrapperRect.top) / scale}px`;
+      wrapper.appendChild(clone);
+
+      const anim = clone.animate(
+        [{ opacity: 1 }, { opacity: 0 }],
+        { duration: sched.durationMs, delay: sched.startMs, easing: sched.easing, fill: 'backwards' }
+      );
+      const cleanup = () => clone.remove();
+      anim.finished.then(cleanup).catch(cleanup);
+    }
   }
 
   // Render new state (Last)
-  container.innerHTML = '';
-
-  for (let lineIdx = 0; lineIdx < toStep.lines.length; lineIdx++) {
-    const line = toStep.lines[lineIdx];
-
-    const lineSpan = document.createElement('span');
-    lineSpan.id = `mm-${container.closest('.magic-move')?.dataset.lang || 'code'}-${lineIdx + 1}`;
-
-    for (const token of line) {
-      const span = document.createElement('span');
-      span.className = token.classes.join(' ');
-      span.textContent = token.content;
-      span.dataset.key = token.key;
-      lineSpan.appendChild(span);
-    }
-
-    container.appendChild(lineSpan);
-
-    if (lineIdx < toStep.lines.length - 1) {
-      container.appendChild(document.createTextNode('\n'));
-    }
-  }
+  renderStep(container, toStep);
 
   // Invert & Play
   const newSpans = container.querySelectorAll('span > span[data-key]');
   for (const span of newSpans) {
     const key = span.dataset.key;
+    const sched = scheduleByKey.get(key) || defaultSchedule;
 
     if (oldPositions.has(key)) {
       // FLIP: Invert - calculate delta and apply transform
-      const oldPos = oldPositions.get(key);
+      const oldPos = oldPositions.get(key).rect;
       const newRect = span.getBoundingClientRect();
-      const deltaX = (oldPos.x - newRect.left) / scale;
-      const deltaY = (oldPos.y - newRect.top) / scale;
+      const deltaX = (oldPos.left - newRect.left) / scale;
+      const deltaY = (oldPos.top - newRect.top) / scale;
 
       if (Math.abs(deltaX) > 0.5 || Math.abs(deltaY) > 0.5) {
         // Play - animate from the inverted (old) position to the final position.
@@ -2808,12 +2950,22 @@ function animateToStep(container, fromStep, toStep) {
             { transform: `translate(${deltaX}px, ${deltaY}px)` },
             { transform: 'translate(0, 0)' }
           ],
-          { duration: 500, easing: 'ease-in-out' }
+          { duration: sched.durationMs, delay: sched.startMs, easing: sched.easing, fill: 'backwards' }
         );
       }
     } else {
-      // New token - fade in
+      // New token - fade in. Driven by WAAPI (not the CSS `magic-enter` keyframes)
+      // so its start time can be scheduled/staggered like everything else; `animation:
+      // none` stops the CSS rule for `[data-entering]` from also firing and double-animating.
       span.dataset.entering = 'true';
+      span.style.animation = 'none';
+      span.animate(
+        [
+          { opacity: 0, transform: 'translateY(-10px)' },
+          { opacity: 1, transform: 'translateY(0)' }
+        ],
+        { duration: sched.durationMs, delay: sched.startMs, easing: sched.easing, fill: 'backwards' }
+      );
     }
   }
 }
@@ -3075,4 +3227,10 @@ function animateMathStep(fromPara, toPara) {
     }
     restoreMathClipping();
   }, 600);
+}
+
+// Expose the pure (DOM-free) plan/schedule functions to `node --test` unit tests.
+// Harmless in the browser: `module` is undefined there, so this branch never runs.
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { buildAnimationPlan, scheduleAnimationPlan, matchSteps, computeTokenAlignment };
 }
