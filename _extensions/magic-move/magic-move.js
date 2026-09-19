@@ -2899,10 +2899,54 @@ function waitForMathJax() {
   });
 }
 
+// MathJax 2's HTML-CSS output stacks things like fractions and scripts using
+// ancestor spans with an inline `clip: rect(...)` sized exactly to their
+// settled (final) layout — that's how it hides the parts of an internal
+// positioning box that shouldn't paint. Our FLIP animation deliberately
+// translates leaf glyphs away from that settled position, so any clip-rect
+// ancestor between a glyph and toMath truncates the glyph mid-flight (looks
+// like stray fragments/dots instead of the glyph sliding smoothly). Neutralize
+// those clips for the duration of the animation; restore() puts them back
+// once it's done. Layout is untouched (`clip` only affects painting).
+function suppressMathClipping(root) {
+  const clipped = [];
+  let node = root;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
+  node = walker.nextNode();
+  while (node) {
+    if (node.style && node.style.clip) {
+      clipped.push({ element: node, clip: node.style.clip });
+      node.style.clip = 'auto';
+    }
+    node = walker.nextNode();
+  }
+  return () => {
+    for (const { element, clip } of clipped) {
+      element.style.clip = clip;
+    }
+  };
+}
+
 // Extract leaf elements (direct text, no element children) from a rendered math container
 function getMathLeafElements(root) {
   const leaves = [];
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, {
+    acceptNode(node) {
+      // MathJax 2 renders a visually-hidden screen-reader-only duplicate of
+      // the whole equation (.MJX_Assistive_MathML, using the classic
+      // position:absolute + clip:rect(1px,1px,1px,1px) trick) alongside the
+      // visible glyphs. It carries the same text content as the real glyphs
+      // (e.g. "y", "x") but sits at unrelated screen coordinates, so if a
+      // leaf came from here, text-based matching could pair a visible glyph
+      // with this duplicate's position instead of its real prior spot,
+      // producing a bogus FLIP delta. Reject the whole subtree so it's never
+      // collected as a leaf.
+      if (node.classList?.contains('MJX_Assistive_MathML') || node.classList?.contains('MathJax_Preview')) {
+        return NodeFilter.FILTER_REJECT;
+      }
+      return NodeFilter.FILTER_ACCEPT;
+    },
+  });
   let node = walker.nextNode();
   while (node) {
     const children = Array.from(node.childNodes);
@@ -2988,6 +3032,8 @@ function animateMathStep(fromPara, toPara) {
   toPara.style.top = '';
   toPara.style.left = '';
 
+  const restoreMathClipping = suppressMathClipping(toMath);
+
   // Invert: shift matched elements back to their old screen positions
   for (const flip of flips) {
     if (Math.abs(flip.deltaX) > 0.5 || Math.abs(flip.deltaY) > 0.5) {
@@ -3027,5 +3073,6 @@ function animateMathStep(fromPara, toPara) {
       leaf.element.style.opacity = '';
       leaf.element.style.display = '';
     }
+    restoreMathClipping();
   }, 600);
 }

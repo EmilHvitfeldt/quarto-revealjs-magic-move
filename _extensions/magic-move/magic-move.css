@@ -53,6 +53,22 @@
   }
 }
 
+/* Math magic move: each step's <p> is centered independently by default (both
+   reveal.js's own paragraph styling and MathJax's inline text-align:center on
+   its own display wrapper), so switching between differently-shaped equations
+   re-centers the whole equation and produces a large, jarring FLIP jump for
+   shared glyphs instead of a small in-place move. Left-align every math step
+   so they share a stable anchor point. !important is required to beat
+   MathJax's inline style on .MathJax_Display / mjx-container. */
+.magic-move > p:has(.math) {
+  text-align: left;
+}
+
+.magic-move > p .MathJax_Display,
+.magic-move > p mjx-container[display="true"] {
+  text-align: left !important;
+}
+
 /* Slide-based magic move */
 .magic-move-slide-overlay span {
   display: inline-block;
