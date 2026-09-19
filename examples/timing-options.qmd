@@ -29,7 +29,7 @@ d <- 4
 Each deleted line fades out as a whole, one line after another; the line
 below them only starts sliding up once both have finished exiting.
 
-::: {.magic-move delay-exit="0" stagger="0.3" delay-move="1.3"}
+::: {.magic-move delay-exit=0 stagger=0.3 delay-move=1.3}
 
 ```r
 a <- 1
@@ -49,7 +49,7 @@ d <- 4
 
 New tokens wait until moves/exits are mostly done before fading in.
 
-::: {.magic-move delay-enter="0.6"}
+::: {.magic-move delay-enter=0.6}
 
 ```r
 a <- 1
@@ -67,7 +67,7 @@ d <- 4
 
 ## Slower, custom-eased transition
 
-::: {.magic-move duration="1200" easing="ease-out"}
+::: {.magic-move duration=1200 easing=ease-out}
 
 ```r
 a <- 1
