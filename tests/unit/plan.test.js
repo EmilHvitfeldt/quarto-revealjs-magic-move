@@ -103,6 +103,20 @@ test('scheduleAnimationPlan applies delay ratios and within-group stagger', () =
   assert.equal(byKey.d.startMs, 600); // 500 + 1 * 0.1 * 1000, staggered within the enter group only
 });
 
+test('delayContainer adds a uniform base to every op, on top of its own delay', () => {
+  const plan = [
+    { type: 'exit', keys: ['a'] },
+    { type: 'move', key: 'b' },
+    { type: 'enter', keys: ['c'] },
+  ];
+  const scheduled = scheduleAnimationPlan(plan, { duration: 1000, delayContainer: 0.25, delayEnter: 0.1 });
+  const byKey = Object.fromEntries(scheduled.map(e => [e.key, e]));
+
+  assert.equal(byKey.a.startMs, 250);
+  assert.equal(byKey.b.startMs, 250);
+  assert.equal(byKey.c.startMs, 350); // (0.25 + 0.1) * 1000
+});
+
 test('stagger does not cascade across separate groups', () => {
   const plan = [
     { type: 'enter', keys: ['a', 'b'] },

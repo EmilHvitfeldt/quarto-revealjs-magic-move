@@ -40,6 +40,12 @@ function initSlideBasedMagicMove(deck) {
 
   // Pre-parse tokens for each slide in each sequence
   for (const sequence of sequences) {
+    // Resolve once per sequence from the first slide's own attributes (e.g. a fenced
+    // div-style `data-delay-enter` on the section) merged over the deck-wide default;
+    // every transition within this sequence shares this one config, same granularity
+    // as the div-based path.
+    sequence.options = resolveMagicMoveOptions(deck, sequence.slides[0]);
+
     for (let i = 0; i < sequence.slides.length; i++) {
       const slide = sequence.slides[i];
       const codeBlock = slide.querySelector('pre code');
@@ -97,7 +103,7 @@ function initSlideBasedMagicMove(deck) {
     if (!fromStep || !toStep || fromSequence !== toSequence) return;
 
     isAnimating = true;
-    animateSlideMagicMove(fromSlide, toSlide, fromStep, toStep, overlay, deck, () => {
+    animateSlideMagicMove(fromSlide, toSlide, fromStep, toStep, overlay, deck, fromSequence.options, () => {
       isAnimating = false;
     });
   });
@@ -146,7 +152,7 @@ function groupConsecutiveSlides(magicSlides, deck) {
   return sequences;
 }
 
-function animateSlideMagicMove(fromSlide, toSlide, fromStep, toStep, overlay, deck, onComplete) {
+function animateSlideMagicMove(fromSlide, toSlide, fromStep, toStep, overlay, deck, options, onComplete) {
   const fromCodeBlock = fromSlide.querySelector('pre code');
   const toCodeBlock = toSlide.querySelector('pre code');
 
@@ -248,11 +254,20 @@ function animateSlideMagicMove(fromSlide, toSlide, fromStep, toStep, overlay, de
   const fromHeightCSS = fromHeight / scale;
   const toHeightCSS = toHeightMeasured / scale;
 
-  // Animate height using the sourceCode div
-  // Set initial height to match the from slide
+  // `delayContainer` defaults to 0.5 here (unlike the div-based path's 0) so that, with
+  // every other option left at its default, token clones start moving/fading exactly
+  // 250ms (0.5 * the 500ms default duration) after the height transition begins —
+  // reproducing this path's original hardcoded `heightAnimationDelay = 250ms` lead-in
+  // bit-for-bit. An explicit `delayContainer` in options still overrides this.
+  const resolvedOptions = { delayContainer: 0.5, ...options };
+  const { duration = 500, easing = 'ease-in-out' } = resolvedOptions;
+
+  // Animate height using the sourceCode div. The container animation is the timing
+  // reference point (`delayContainer` delays *token* ops relative to it, not itself),
+  // so it always starts immediately and runs for `duration`.
   toSourceCodeDiv.style.height = `${fromHeightCSS}px`;
   toSourceCodeDiv.style.overflow = 'hidden';
-  toSourceCodeDiv.style.transition = 'height 0.5s ease-in-out';
+  toSourceCodeDiv.style.transition = `height ${duration}ms ${easing}`;
 
   // Use requestAnimationFrame to ensure layout is complete before animating
   requestAnimationFrame(() => {
@@ -267,12 +282,42 @@ function animateSlideMagicMove(fromSlide, toSlide, fromStep, toStep, overlay, de
     span.style.color = 'transparent';
   }
 
-  // Create animated clones in the overlay for ALL "to" spans
+  // Build the match result into a plan (exit/move/enter) and schedule (per-token start
+  // times), same primitives as the div-based path. This token model is flat (one token
+  // list per step, no line grouping data structure), so it's fed to buildAnimationPlan
+  // as a single pseudo-line — batching still groups contiguous exit/enter runs, just
+  // without the "never cross a line boundary" restriction the div-based path has.
+  const usedFromIndices = new Set(matchFromIndex.filter(i => i !== -1));
+  const fromStepForPlan = {
+    tokens: fromTokenData.map((_, i) => ({ key: `f${i}` })),
+  };
+  fromStepForPlan.lines = [fromStepForPlan.tokens];
+  const toStepForPlan = {
+    tokens: toSpanData.map((_, j) => ({
+      key: matchFromIndex[j] !== -1 ? `f${matchFromIndex[j]}` : `n${j}`,
+    })),
+  };
+  toStepForPlan.lines = [toStepForPlan.tokens];
+
+  const plan = buildAnimationPlan(fromStepForPlan, toStepForPlan);
+  const scheduled = scheduleAnimationPlan(plan, resolvedOptions);
+  const scheduleByKey = new Map(scheduled.map(entry => [entry.key, entry]));
+  const defaultSchedule = { startMs: resolvedOptions.delayContainer * duration, durationMs: duration, easing };
+
+  function transitionFor(sched) {
+    const props = ['left', 'top', 'opacity'];
+    return props.map(prop => `${prop} ${sched.durationMs}ms ${sched.easing} ${sched.startMs}ms`).join(', ');
+  }
+
+  // Create animated clones in the overlay for every "to" span (matched or new)...
   const clones = [];
 
-  for (const toData of toSpanData) {
+  for (let j = 0; j < toSpanData.length; j++) {
+    const toData = toSpanData[j];
     const hasMatch = !!toData.matchedFrom;
     const fromData = toData.matchedFrom;
+    const key = hasMatch ? `f${matchFromIndex[j]}` : `n${j}`;
+    const sched = scheduleByKey.get(key) || defaultSchedule;
 
     const clone = document.createElement('span');
     clone.textContent = toData.content;
@@ -306,35 +351,78 @@ function animateSlideMagicMove(fromSlide, toSlide, fromStep, toStep, overlay, de
     `;
 
     overlay.appendChild(clone);
-    clones.push({ clone, toData, hasMatch });
+    clones.push({ clone, toData, hasMatch, sched });
   }
 
-  // Force reflow
+  // ...and, for the first time, a clone for every "from" token that has no match in
+  // "to" either — these previously got no clone at all and just vanished the instant
+  // toSlide's own real (transparent-during-transition) content took over. They fade
+  // out from their original position instead.
+  const exitClones = [];
+  fromTokenData.forEach((fromData, i) => {
+    if (usedFromIndices.has(i)) return;
+    const sched = scheduleByKey.get(`f${i}`) || defaultSchedule;
+
+    const clone = document.createElement('span');
+    clone.textContent = fromData.content;
+    const style = fromData.computedStyle;
+    const fontSize = parseFloat(style.fontSize) * scale;
+    const lineHeight = parseFloat(style.lineHeight) * scale;
+
+    clone.style.cssText = `
+      position: fixed;
+      left: ${fromData.x}px;
+      top: ${fromData.y}px;
+      font-family: ${style.fontFamily};
+      font-size: ${fontSize}px;
+      line-height: ${isNaN(lineHeight) ? 'normal' : lineHeight + 'px'};
+      letter-spacing: ${style.letterSpacing};
+      color: ${style.color};
+      font-weight: ${style.fontWeight};
+      font-style: ${style.fontStyle};
+      white-space: pre;
+      pointer-events: none;
+      opacity: 1;
+    `;
+
+    overlay.appendChild(clone);
+    exitClones.push({ clone, fromData, sched });
+  });
+
+  // Force reflow before assigning transitions, so the starting values above are
+  // actually painted first rather than being coalesced with what follows.
   overlay.offsetHeight;
 
-  // Delay token animation to let height expand first
-  const heightAnimationDelay = 250; // ms
+  // Each clone gets its own transition-delay from its schedule entry instead of a
+  // single global setTimeout gating everyone at once — this is what makes per-op
+  // delay/stagger configurable instead of a hardcoded two-stage dance.
+  for (const { clone, sched } of clones) {
+    clone.style.transition = transitionFor(sched);
+  }
+  for (const { clone, sched } of exitClones) {
+    clone.style.transition = transitionFor(sched);
+  }
 
-  setTimeout(() => {
-    // Add transitions to clones
-    for (const { clone } of clones) {
-      clone.style.transition = 'left 0.5s ease-in-out, top 0.5s ease-in-out, opacity 0.5s ease-in-out';
+  overlay.offsetHeight;
+
+  for (const { clone, toData, hasMatch } of clones) {
+    clone.style.left = `${toData.x}px`;
+    clone.style.top = `${toData.y}px`;
+    if (!hasMatch) {
+      clone.style.opacity = '1';
     }
+  }
+  for (const { clone } of exitClones) {
+    clone.style.opacity = '0';
+  }
 
-    // Force reflow
-    overlay.offsetHeight;
+  // Clean up once every clone (and the height transition) has actually finished,
+  // rather than a hardcoded total.
+  const allEndTimes = scheduled.map(entry => entry.startMs + entry.durationMs);
+  allEndTimes.push(resolvedOptions.delayContainer * duration + duration); // container/default reference
+  allEndTimes.push(duration); // height transition itself
+  const cleanupDelay = Math.max(...allEndTimes) + 50; // small buffer, matches original's +50ms
 
-    // Animate to final positions
-    for (const { clone, toData, hasMatch } of clones) {
-      clone.style.left = `${toData.x}px`;
-      clone.style.top = `${toData.y}px`;
-      if (!hasMatch) {
-        clone.style.opacity = '1';
-      }
-    }
-  }, heightAnimationDelay);
-
-  // Clean up after both animations complete
   setTimeout(() => {
     // Restore code text colors
     toCodeBlock.style.color = '';
@@ -342,9 +430,11 @@ function animateSlideMagicMove(fromSlide, toSlide, fromStep, toStep, overlay, de
       span.style.color = '';
     }
 
-
     // Remove clones
     for (const { clone } of clones) {
+      clone.remove();
+    }
+    for (const { clone } of exitClones) {
       clone.remove();
     }
 
@@ -354,7 +444,7 @@ function animateSlideMagicMove(fromSlide, toSlide, fromStep, toStep, overlay, de
     toSourceCodeDiv.style.transition = '';
 
     onComplete();
-  }, heightAnimationDelay + 550); // Height delay + token animation duration
+  }, cleanupDelay);
 }
 
 // Get bounding rect for a token (handles partial text nodes)
@@ -2791,6 +2881,10 @@ function buildAnimationPlan(fromStep, toStep) {
 // `delayEnter: 0.3` starts entering tokens 30% of the duration after exits/moves begin.
 // `stagger` cascades tokens *within* a single exit/enter group only (ratio of duration
 // per token index in the group); it never cascades across groups or the whole plan.
+// `delayContainer` is a uniform base added to every op's start (ratio of duration) — for
+// subsystems with a separate container-level animation (e.g. the slide-based path's
+// height transition) that all token ops should wait on by default; the div-based path
+// has no such container animation, hence its default of 0.
 //
 // With every option at its default (0), every token gets startMs 0 and the same
 // duration/easing — i.e. everything plays back simultaneously, matching the pre-plan
@@ -2801,6 +2895,7 @@ function scheduleAnimationPlan(plan, options = {}) {
   const {
     duration = 500,
     easing = 'ease-in-out',
+    delayContainer = 0,
     delayExit = 0,
     delayMove = 0,
     delayEnter = 0,
@@ -2815,14 +2910,14 @@ function scheduleAnimationPlan(plan, options = {}) {
       scheduled.push({
         type: 'move',
         key: op.key,
-        startMs: delayMove * duration,
+        startMs: (delayContainer + delayMove) * duration,
         durationMs: duration,
         easing,
       });
       continue;
     }
 
-    const baseMs = groupBaseDelay[op.type] * duration;
+    const baseMs = (delayContainer + groupBaseDelay[op.type]) * duration;
     op.keys.forEach((key, i) => {
       scheduled.push({
         type: op.type,
