@@ -2879,8 +2879,14 @@ function buildAnimationPlan(fromStep, toStep) {
 // "durationMs", "easing") list. Pure data/math, no DOM. `delayExit`/`delayMove`/`delayEnter`
 // are ratios of `duration` (consistent with shiki's magic-move convention), so e.g.
 // `delayEnter: 0.3` starts entering tokens 30% of the duration after exits/moves begin.
-// `stagger` cascades tokens *within* a single exit/enter group only (ratio of duration
-// per token index in the group); it never cascades across groups or the whole plan.
+// `stagger` cascades *groups* (ratio of duration per exit/enter op encountered, exit and
+// enter counted separately) — every key within one group still shares that group's single
+// start time, since a group is already a deliberate visual unit (typically "this whole
+// line is being removed/added"), not something that should itself dissolve into a
+// token-by-token trickle. So with `stagger: 0.3`, the first removed line starts exiting
+// immediately, the second removed line 0.3*duration later, etc. — "remove line 2, then
+// remove line 3, then move" rather than each individual token in line 2 fading in its own
+// staggered turn.
 // `delayContainer` is a uniform base added to every op's start (ratio of duration) — for
 // subsystems with a separate container-level animation (e.g. the slide-based path's
 // height transition) that all token ops should wait on by default; the div-based path
@@ -2903,6 +2909,7 @@ function scheduleAnimationPlan(plan, options = {}) {
   } = options;
 
   const groupBaseDelay = { exit: delayExit, enter: delayEnter };
+  const groupIndex = { exit: 0, enter: 0 };
   const scheduled = [];
 
   for (const op of plan) {
@@ -2917,16 +2924,11 @@ function scheduleAnimationPlan(plan, options = {}) {
       continue;
     }
 
-    const baseMs = (delayContainer + groupBaseDelay[op.type]) * duration;
-    op.keys.forEach((key, i) => {
-      scheduled.push({
-        type: op.type,
-        key,
-        startMs: baseMs + i * stagger * duration,
-        durationMs: duration,
-        easing,
-      });
-    });
+    const index = groupIndex[op.type]++;
+    const startMs = (delayContainer + groupBaseDelay[op.type] + index * stagger) * duration;
+    for (const key of op.keys) {
+      scheduled.push({ type: op.type, key, startMs, durationMs: duration, easing });
+    }
   }
 
   return scheduled;

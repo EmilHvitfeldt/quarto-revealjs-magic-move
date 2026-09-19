@@ -82,7 +82,7 @@ test('scheduleAnimationPlan defaults collapse to simultaneous playback', () => {
   }
 });
 
-test('scheduleAnimationPlan applies delay ratios and within-group stagger', () => {
+test('scheduleAnimationPlan applies delay ratios; a group\'s keys share one start time', () => {
   const plan = [
     { type: 'exit', keys: ['a'] },
     { type: 'move', key: 'b' },
@@ -99,8 +99,32 @@ test('scheduleAnimationPlan applies delay ratios and within-group stagger', () =
 
   assert.equal(byKey.a.startMs, 0);
   assert.equal(byKey.b.startMs, 200);
+  // c and d are two keys of the *same* enter group (one contiguous run), so they
+  // share a single start time - a group is a visual unit, not something that
+  // itself trickles token-by-token.
   assert.equal(byKey.c.startMs, 500);
-  assert.equal(byKey.d.startMs, 600); // 500 + 1 * 0.1 * 1000, staggered within the enter group only
+  assert.equal(byKey.d.startMs, 500);
+});
+
+test('stagger cascades across successive groups of the same type, one op at a time', () => {
+  // Models "remove line 2, then remove line 3, then move" - each removed line is
+  // its own exit op (buildAnimationPlan batches per-line), and stagger delays each
+  // successive op relative to the previous one rather than trickling within one.
+  const plan = [
+    { type: 'exit', keys: ['line2-a', 'line2-b'] },
+    { type: 'exit', keys: ['line3-a', 'line3-b'] },
+    { type: 'move', key: 'line4' },
+  ];
+  const scheduled = scheduleAnimationPlan(plan, { duration: 1000, stagger: 0.3, delayMove: 1.3 });
+  const byKey = Object.fromEntries(scheduled.map(e => [e.key, e]));
+
+  assert.equal(byKey['line2-a'].startMs, 0);
+  assert.equal(byKey['line2-b'].startMs, 0);
+  assert.equal(byKey['line3-a'].startMs, 300);
+  assert.equal(byKey['line3-b'].startMs, 300);
+  // line4's move waits until both exit groups have fully finished: the second
+  // exit group starts at 300ms and runs for 1000ms, ending at 1300ms.
+  assert.equal(byKey.line4.startMs, 1300);
 });
 
 test('delayContainer adds a uniform base to every op, on top of its own delay', () => {
@@ -117,17 +141,16 @@ test('delayContainer adds a uniform base to every op, on top of its own delay', 
   assert.equal(byKey.c.startMs, 350); // (0.25 + 0.1) * 1000
 });
 
-test('stagger does not cascade across separate groups', () => {
+test('stagger indices exit and enter groups independently', () => {
   const plan = [
-    { type: 'enter', keys: ['a', 'b'] },
-    { type: 'move', key: 'x' },
-    { type: 'enter', keys: ['c'] },
+    { type: 'exit', keys: ['a'] },
+    { type: 'enter', keys: ['b'] },
+    { type: 'exit', keys: ['c'] },
   ];
-  const scheduled = scheduleAnimationPlan(plan, { duration: 1000, delayEnter: 0, stagger: 0.1 });
+  const scheduled = scheduleAnimationPlan(plan, { duration: 1000, stagger: 0.1 });
   const byKey = Object.fromEntries(scheduled.map(e => [e.key, e]));
 
-  assert.equal(byKey.a.startMs, 0);
-  assert.equal(byKey.b.startMs, 100);
-  // second enter group restarts its own index at 0, independent of the first group
-  assert.equal(byKey.c.startMs, 0);
+  assert.equal(byKey.a.startMs, 0); // 1st exit group
+  assert.equal(byKey.b.startMs, 0); // 1st enter group, its own independent counter
+  assert.equal(byKey.c.startMs, 100); // 2nd exit group
 });

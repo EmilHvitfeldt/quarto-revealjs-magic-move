@@ -26,8 +26,8 @@ d <- 4
 
 ## Staggered exit {.smaller}
 
-Deleted tokens fade out one after another, right away; the line below them
-only starts sliding up once both have finished exiting.
+Each deleted line fades out as a whole, one line after another; the line
+below them only starts sliding up once both have finished exiting.
 
 ::: {.magic-move delay-exit="0" stagger="0.3" delay-move="1.3"}
 
