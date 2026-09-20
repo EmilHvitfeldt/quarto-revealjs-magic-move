@@ -8,10 +8,46 @@
 
 .magic-move .magic-move-wrapper {
   position: relative;
-  padding: 1em;
   border-radius: 8px;
   overflow: hidden;
+  /* Quarto/reveal's theme sets `.reveal pre { width: 100% }` (content-box by default),
+   * so any padding here (e.g. the number gutter's padding-left below) would normally
+   * push the border box wider than the 100% content width it's measured against,
+   * overflowing the (non-clipping) wrapper-outer div and forcing a horizontal
+   * scrollbar. border-box keeps that padding inside that 100% instead of adding to it. */
+  box-sizing: border-box;
 }
+
+/* The outer div carries pandoc's `.sourceCode` class, which Quarto's revealjs theme
+ * gives `overflow: auto`. Even once nothing actually overflows it, some browsers (e.g.
+ * with "always show scrollbars") still paint a scrollbar track for an `auto` element.
+ * Nothing here is ever meant to scroll — the wrapper above already clips its own
+ * content — so force it hidden. (Three classes to outrank `.reveal div.sourceCode`'s
+ * two classes + one tag.) */
+.magic-move .sourceCode.magic-move-wrapper-outer {
+  overflow: hidden;
+  /* This div only exists to mimic pandoc's `<div class="sourceCode"><pre>...` nesting
+   * so other `.sourceCode`-scoped rules resolve the same way they would for a real
+   * code block. But that same class also carries a syntax-theme background color
+   * meant for a plain code block, not a wrapper around our own bordered
+   * `.magic-move-wrapper`. The wrapper's box doesn't perfectly cover this div's (a
+   * fraction of a pixel of rounding either side), so without this, a sliver of that
+   * background peeked out around the wrapper's edges — looking exactly like a
+   * scrollbar track sitting under the code box. */
+  background: transparent;
+}
+
+/* The reveal.js theme's generic `.reveal pre code { overflow: auto; max-height: 400px }`
+ * applies to every code block in every deck, magic-move or not, and can paint a
+ * horizontal scrollbar track from sub-pixel width rounding even when nothing
+ * meaningfully overflows (visible on both the div-based and slide-based demos, not
+ * something specific to the synthetic wrapper). This matches that rule's specificity
+ * (one class, two tags) and wins on source order (this file loads after the theme),
+ * so no scrollbar can ever paint here. */
+.magic-move pre code {
+  overflow: visible;
+}
+
 
 .magic-move .magic-move-render {
   position: relative;
