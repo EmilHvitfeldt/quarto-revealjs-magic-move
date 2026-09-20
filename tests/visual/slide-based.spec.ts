@@ -56,4 +56,29 @@ test.describe('slide-based.qmd — slide-based magic-move', () => {
 
     writeManifest(testInfo, frames);
   });
+
+  // Slide-based's own counterpart to timing-options.spec.ts's "staggered exit": the
+  // `.sourceCode` height transition (animateSlideMagicMove, magic-move.js) used to
+  // always run on a fixed [0, duration] window regardless of `delay-move`/`stagger`,
+  // so with delay-move=1.3 the box would finish shrinking well before the delayed move
+  // that's supposed to close the gap even started. It's now synced to the `move`
+  // schedule the same way the div-based wrapper height fix is, so the box should hold
+  // its "from" size through the staggered exits and only start shrinking once the
+  // delayed move begins.
+  test('staggered exit (delay-move / stagger drive the height transition)', async ({ page }, testInfo) => {
+    await gotoSlide(page, '/examples/slide-based.html', 'staggered-exit-step-1');
+    const frames: FilmstripFrame[] = [];
+
+    await captureFrame(page, page, 'slide-staggered-exit-step1-initial.png', 'Step 1 (initial)', frames, testInfo);
+
+    await goNext(page);
+    await captureFilmstrip(page, page, 'slide-staggered-exit-step2', 'Step 2 (stagger: 0.3, delay-move: 1.3)', frames, testInfo);
+    // Sample past the default schedule too: with delayContainer=0.5 stacked on top of
+    // delay-move=1.3, the move (and the height transition synced to it) doesn't even
+    // start until 900ms and doesn't finish until ~1400ms.
+    await page.waitForTimeout(500);
+    await captureFrame(page, page, 'slide-staggered-exit-step2-1450ms.png', 'Step 2 settled @ 1450ms', frames, testInfo);
+
+    writeManifest(testInfo, frames);
+  });
 });
