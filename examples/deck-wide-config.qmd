@@ -1,0 +1,33 @@
+---
+title: Magic Move Deck-wide Config
+format:
+  revealjs:
+    magic-move:
+      duration: 1200
+      stagger: 0.3
+      delay-exit: 0.2
+revealjs-plugins:
+  - magic-move
+---
+
+## Deck-wide default
+
+This container has no per-container attributes at all; the slower, staggered
+timing comes entirely from the deck-wide `format.revealjs.magic-move` option
+set in this document's YAML header (see the source of this file).
+
+::: magic-move
+
+```r
+a <- 1
+b <- 2
+c <- 3
+d <- 4
+```
+
+```r
+a <- 1
+d <- 4
+```
+
+:::

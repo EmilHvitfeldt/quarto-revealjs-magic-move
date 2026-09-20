@@ -12,6 +12,7 @@ declare global {
       next(): void;
       prev(): void;
       configure(options: Record<string, unknown>): void;
+      getConfig(): Record<string, unknown>;
     };
   }
 }
