@@ -2478,8 +2478,15 @@ function initDivBasedMagicMove(deck) {
     const outerDiv = document.createElement('div');
     outerDiv.className = 'sourceCode magic-move-wrapper-outer';
 
+    // Preserve Quarto/pandoc's line-numbering classes so numbered code blocks
+    // still show line numbers once rendered into the synthetic wrapper below;
+    // renderStep() adds the matching per-line <a> that the numberSource CSS
+    // counter keys off of.
+    const numbered = firstPre.classList.contains('numberSource');
+
     const wrapper = document.createElement('pre');
     wrapper.className = `sourceCode ${lang} magic-move-wrapper`;
+    if (numbered) wrapper.classList.add('numberSource', 'number-lines');
 
     const computedStyle = window.getComputedStyle(firstPre);
     wrapper.style.background = computedStyle.backgroundColor || '#24292e';
@@ -2488,12 +2495,18 @@ function initDivBasedMagicMove(deck) {
 
     const renderTarget = document.createElement('code');
     renderTarget.className = `sourceCode ${lang} magic-move-render`;
+    renderTarget.dataset.numbered = numbered ? 'true' : 'false';
     renderTarget.style.minHeight = (maxLines * 1.5) + 'em';
     wrapper.appendChild(renderTarget);
     outerDiv.appendChild(wrapper);
 
-    // Hide original code blocks
-    container.querySelectorAll('pre').forEach(pre => pre.style.display = 'none');
+    // Hide original code blocks. Hiding just the <pre> leaves pandoc's wrapping
+    // `<div class="sourceCode">` in the DOM with its syntax-theme background and
+    // border-bottom still showing (margins collapse around the hidden pre, but the
+    // div itself doesn't), so hide that wrapper div too when there is one.
+    container.querySelectorAll('pre').forEach(pre => {
+      (pre.closest('div.sourceCode') || pre).style.display = 'none';
+    });
     container.querySelectorAll('p').forEach(p => {
       if (p.querySelector('.magic-move-step')) p.style.display = 'none';
     });
@@ -2976,6 +2989,7 @@ function scheduleAnimationPlan(plan, options = {}) {
 
 function renderStep(container, step) {
   container.innerHTML = '';
+  const numbered = container.dataset.numbered === 'true';
 
   for (let lineIdx = 0; lineIdx < step.lines.length; lineIdx++) {
     const line = step.lines[lineIdx];
@@ -2983,6 +2997,14 @@ function renderStep(container, step) {
     // Create line wrapper span (like Quarto's <span id="cb1-1">)
     const lineSpan = document.createElement('span');
     lineSpan.id = `mm-${container.closest('.magic-move')?.dataset.lang || 'code'}-${lineIdx + 1}`;
+
+    if (numbered) {
+      // Quarto's numberSource CSS renders the line number from a counter that
+      // increments on each direct <span> child of <code> and reads off the
+      // first-child <a>'s ::before content, so the anchor must be present and
+      // first for the number to show up.
+      lineSpan.appendChild(document.createElement('a'));
+    }
 
     for (const token of line) {
       const span = document.createElement('span');
