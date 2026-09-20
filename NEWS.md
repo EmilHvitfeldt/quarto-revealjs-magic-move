@@ -25,6 +25,9 @@
 - Removed lines/tokens in div-based and slide-based code magic-move now fade out instead of vanishing instantly. Previously only additions and moves were animated.
 - Backward navigation (stepping back through a magic-move sequence) now correctly time-reverses any configured stagger/delay choreography, instead of replaying it in the same order it played forward.
 - The deck-wide `format: revealjs: magic-move: { ... }` default now actually reaches the browser. `_extension.yml` previously never declared `magicMove` as a config key, so Quarto's revealjs writer silently dropped it and `deck.getConfig().magicMove` was always `undefined` ([#4](https://github.com/EmilHvitfeldt/quarto-revealjs-magic-move/issues/4)). Nested option names can be written as either `delayExit` or `delay-exit` — both now resolve the same way.
+- Numbered code blocks (`numberSource`/`#| code-line-numbers`) now show line numbers in div-based magic-move too; previously only slide-based did ([#3](https://github.com/EmilHvitfeldt/quarto-revealjs-magic-move/issues/3)).
+- Div-based magic-move's wrapper now animates its height between steps of different line counts, the same way slide-based already did, instead of staying pinned to a fixed height sized for the tallest step in the sequence ([#3](https://github.com/EmilHvitfeldt/quarto-revealjs-magic-move/issues/3)).
+- Fixed layout artifacts in div-based magic-move introduced by the line-number and height-animation fixes above: a horizontal scrollbar, extra padding not present in slide-based, and a leftover grey bar from the original (hidden) code block's wrapper div not being fully hidden.
 
 ### Internal
 
