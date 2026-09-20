@@ -81,4 +81,26 @@ test.describe('timing-options.qmd — per-container magic-move config', () => {
 
     writeManifest(testInfo, frames);
   });
+
+  // Slide-based magic-move (animateSlideMagicMove) supports the same timing options as
+  // the div-based path above, driven through the same buildAnimationPlan/
+  // scheduleAnimationPlan primitives. Its animation overlay is position: fixed across
+  // the whole viewport (see slide-based.spec.ts), so frames are captured full-page
+  // rather than via a locator scoped to one container.
+  test('staggered exit (slide-based)', async ({ page }, testInfo) => {
+    await gotoSlide(page, '/examples/timing-options.html', 'staggered-exit-slide-based');
+    const frames: FilmstripFrame[] = [];
+
+    await captureFrame(page, page, 'slide-staggered-exit-step1-initial.png', 'Step 1 (initial)', frames, testInfo);
+
+    await goNext(page);
+    await captureFilmstrip(page, page, 'slide-staggered-exit-step2', 'Step 2 (stagger: 0.3, delay-move: 1.3)', frames, testInfo);
+    // Sample past the default schedule too: with delayContainer=0.5 stacked on top of
+    // delay-move=1.3, the move (and the height transition synced to it) doesn't even
+    // start until 900ms and doesn't finish until ~1400ms.
+    await page.waitForTimeout(500);
+    await captureFrame(page, page, 'slide-staggered-exit-step2-1450ms.png', 'Step 2 settled @ 1450ms', frames, testInfo);
+
+    writeManifest(testInfo, frames);
+  });
 });

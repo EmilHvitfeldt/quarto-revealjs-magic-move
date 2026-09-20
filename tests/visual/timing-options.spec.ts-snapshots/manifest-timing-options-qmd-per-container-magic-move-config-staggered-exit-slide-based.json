@@ -1,0 +1,38 @@
+{
+  "key": "timing-options-qmd-per-container-magic-move-config-staggered-exit-slide-based",
+  "title": "staggered exit (slide-based)",
+  "frames": [
+    {
+      "name": "slide-staggered-exit-step1-initial.png",
+      "label": "Step 1 (initial)"
+    },
+    {
+      "name": "slide-staggered-exit-step2-0ms.png",
+      "label": "Step 2 (stagger: 0.3, delay-move: 1.3) @ 0ms"
+    },
+    {
+      "name": "slide-staggered-exit-step2-100ms.png",
+      "label": "Step 2 (stagger: 0.3, delay-move: 1.3) @ 100ms"
+    },
+    {
+      "name": "slide-staggered-exit-step2-250ms.png",
+      "label": "Step 2 (stagger: 0.3, delay-move: 1.3) @ 250ms"
+    },
+    {
+      "name": "slide-staggered-exit-step2-450ms.png",
+      "label": "Step 2 (stagger: 0.3, delay-move: 1.3) @ 450ms"
+    },
+    {
+      "name": "slide-staggered-exit-step2-700ms.png",
+      "label": "Step 2 (stagger: 0.3, delay-move: 1.3) @ 700ms"
+    },
+    {
+      "name": "slide-staggered-exit-step2-950ms.png",
+      "label": "Step 2 (stagger: 0.3, delay-move: 1.3) @ 950ms"
+    },
+    {
+      "name": "slide-staggered-exit-step2-1450ms.png",
+      "label": "Step 2 settled @ 1450ms"
+    }
+  ]
+}
