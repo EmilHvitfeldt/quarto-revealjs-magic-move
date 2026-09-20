@@ -28,6 +28,7 @@
 - Numbered code blocks (`numberSource`/`#| code-line-numbers`) now show line numbers in div-based magic-move too; previously only slide-based did ([#3](https://github.com/EmilHvitfeldt/quarto-revealjs-magic-move/issues/3)).
 - Div-based magic-move's wrapper now animates its height between steps of different line counts, the same way slide-based already did, instead of staying pinned to a fixed height sized for the tallest step in the sequence ([#3](https://github.com/EmilHvitfeldt/quarto-revealjs-magic-move/issues/3)).
 - Fixed layout artifacts in div-based magic-move introduced by the line-number and height-animation fixes above: a horizontal scrollbar, extra padding not present in slide-based, and a leftover grey bar from the original (hidden) code block's wrapper div not being fully hidden.
+- Div-based magic-move's wrapper height animation now stays in sync with `delay-exit`/`delay-move`/`delay-enter`/`stagger`, instead of always resizing on a fixed `[0, duration]` timeline regardless of how the content animation was configured. When shrinking, the box now waits for the last relevant exit/move to actually settle before it starts collapsing (previously the box could shrink out from under still-fading or still-moving content); when growing, the box now finishes growing exactly when the last relevant move lands (previously a moved line could visibly settle into position before the box had finished growing to contain it).
 
 ### Internal
 
