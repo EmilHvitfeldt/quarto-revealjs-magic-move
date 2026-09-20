@@ -2380,12 +2380,19 @@ function reconstructPath(parsed) {
 // DIV-BASED MAGIC MOVE (existing implementation)
 // =============================================================================
 
-// Merge deck-wide `Reveal.initialize({ magicMove: {...} })` defaults with a per-container
-// override read from the fenced div's own attributes (e.g. `{.magic-move delay-enter="0.3"}`,
-// exposed on `container.dataset.delayEnter`). Per-container wins. One merged config applies
-// to every step transition inside that container — no per-step override.
+// Merge deck-wide defaults, set via `format: revealjs: magic-move: {...}` in the document's
+// YAML (forwarded into `deck.getConfig().magicMove` because `_extension.yml` declares
+// `magicMove` as a config key of the RevealMagicMove plugin), with a per-container override
+// read from the fenced div's own attributes (e.g. `{.magic-move delay-enter="0.3"}`, exposed
+// on `container.dataset.delayEnter`). Per-container wins. One merged config applies to every
+// step transition inside that container — no per-step override.
 function resolveMagicMoveOptions(deck, container) {
-  const deckOptions = deck.getConfig().magicMove || {};
+  // Quarto's YAML metadata pipeline passes nested keys through verbatim (no kebab/camel
+  // normalization for arbitrary plugin config), so `delay-exit: 0.2` under a deck-wide
+  // `format: revealjs: magic-move:` block would otherwise land as a `delay-exit` property
+  // and be silently ignored by the `delayExit` read below. Normalize so both casings work,
+  // matching the kebab-case attribute syntax the per-container override already accepts.
+  const deckOptions = normalizeMagicMoveKeys(deck.getConfig().magicMove || {});
   const containerOptions = {};
   const numericKeys = ['duration', 'delayExit', 'delayMove', 'delayEnter', 'stagger'];
 
@@ -2399,6 +2406,15 @@ function resolveMagicMoveOptions(deck, container) {
   }
 
   return { ...deckOptions, ...containerOptions };
+}
+
+function normalizeMagicMoveKeys(options) {
+  const normalized = {};
+  for (const key of Object.keys(options)) {
+    const camelKey = key.replace(/-([a-z0-9])/g, (_, c) => c.toUpperCase());
+    normalized[camelKey] = options[key];
+  }
+  return normalized;
 }
 
 function initDivBasedMagicMove(deck) {
@@ -3353,5 +3369,5 @@ function animateMathStep(fromPara, toPara) {
 // Expose the pure (DOM-free) plan/schedule functions to `node --test` unit tests.
 // Harmless in the browser: `module` is undefined there, so this branch never runs.
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { buildAnimationPlan, scheduleAnimationPlan, matchSteps, computeTokenAlignment };
+  module.exports = { buildAnimationPlan, scheduleAnimationPlan, matchSteps, computeTokenAlignment, normalizeMagicMoveKeys };
 }

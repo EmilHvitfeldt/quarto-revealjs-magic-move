@@ -5,6 +5,7 @@ project:
     - examples/basic.qmd
     - examples/code-chunk-cases.qmd
     - examples/timing-options.qmd
+    - examples/deck-wide-config.qmd
     - examples/slide-based.qmd
     - examples/mathjax.qmd
     - examples/svgs.qmd

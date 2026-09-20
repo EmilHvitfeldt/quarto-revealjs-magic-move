@@ -1,0 +1,34 @@
+{
+  "key": "deck-wide-config-qmd-deck-wide-magic-move-config-deck-wide-duration-stagger-actually-drive-the-animation",
+  "title": "deck-wide duration/stagger actually drive the animation",
+  "frames": [
+    {
+      "name": "deck-wide-step1-initial.png",
+      "label": "Step 1 (initial)"
+    },
+    {
+      "name": "deck-wide-step2-0ms.png",
+      "label": "Step 2 (deck-wide duration: 1200ms) @ 0ms"
+    },
+    {
+      "name": "deck-wide-step2-100ms.png",
+      "label": "Step 2 (deck-wide duration: 1200ms) @ 100ms"
+    },
+    {
+      "name": "deck-wide-step2-250ms.png",
+      "label": "Step 2 (deck-wide duration: 1200ms) @ 250ms"
+    },
+    {
+      "name": "deck-wide-step2-450ms.png",
+      "label": "Step 2 (deck-wide duration: 1200ms) @ 450ms"
+    },
+    {
+      "name": "deck-wide-step2-700ms.png",
+      "label": "Step 2 (deck-wide duration: 1200ms) @ 700ms"
+    },
+    {
+      "name": "deck-wide-step2-950ms.png",
+      "label": "Step 2 (deck-wide duration: 1200ms) @ 950ms"
+    }
+  ]
+}
