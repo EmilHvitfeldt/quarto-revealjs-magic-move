@@ -268,18 +268,6 @@ function animateSlideMagicMove(fromSlide, toSlide, fromStep, toStep, overlay, de
   const resolvedOptions = { delayContainer: 0.5, ...options };
   const { duration = 500, easing = 'ease-in-out' } = resolvedOptions;
 
-  // Animate height using the sourceCode div. The container animation is the timing
-  // reference point (`delayContainer` delays *token* ops relative to it, not itself),
-  // so it always starts immediately and runs for `duration`.
-  toSourceCodeDiv.style.height = `${fromHeightCSS}px`;
-  toSourceCodeDiv.style.overflow = 'hidden';
-  toSourceCodeDiv.style.transition = `height ${duration}ms ${easing}`;
-
-  // Use requestAnimationFrame to ensure layout is complete before animating
-  requestAnimationFrame(() => {
-    toSourceCodeDiv.style.height = `${toHeightCSS}px`;
-  });
-
   // Make the code text transparent (but keep structure for line numbers)
   toCodeBlock.style.color = 'transparent';
   // Also hide any syntax-highlighted spans
@@ -309,6 +297,41 @@ function animateSlideMagicMove(fromSlide, toSlide, fromStep, toStep, overlay, de
   const scheduled = scheduleAnimationPlan(plan, resolvedOptions);
   const scheduleByKey = new Map(scheduled.map(entry => [entry.key, entry]));
   const defaultSchedule = { startMs: resolvedOptions.delayContainer * duration, durationMs: duration, easing };
+
+  // Animate height using the sourceCode div. Same reasoning as the div-based path's
+  // wrapper height fix: a moved token is rendered at its true final position from the
+  // moment its own transition ends, so if `move` ops exist the box's own height window
+  // is synced to exactly their [start, end] rather than always running a fixed
+  // [0, duration] regardless of `delay-move`/`stagger` — otherwise a large delay-move
+  // (or stagger spreading exits out) leaves the box shrinking/growing well before or
+  // after the tokens whose settling it's supposed to track. Falls back to the exit
+  // window (shrink) or enter window (grow) when there's no move to anchor to, or plain
+  // [0, duration] if the plan has no ops at all — this still matches the original
+  // hardcoded behavior whenever every delay/stagger option is left at 0.
+  let heightDelay = 0;
+  let heightDuration = duration;
+  if (scheduled.length) {
+    const moveEntries = scheduled.filter(entry => entry.type === 'move');
+    let relevant = moveEntries;
+    if (!relevant.length) {
+      const fallbackType = toHeightCSS < fromHeightCSS ? 'exit' : 'enter';
+      relevant = scheduled.filter(entry => entry.type === fallbackType);
+    }
+    if (!relevant.length) relevant = scheduled;
+    const starts = relevant.map(entry => entry.startMs);
+    const ends = relevant.map(entry => entry.startMs + entry.durationMs);
+    heightDelay = Math.min(...starts);
+    heightDuration = Math.max(...ends) - heightDelay;
+  }
+
+  toSourceCodeDiv.style.height = `${fromHeightCSS}px`;
+  toSourceCodeDiv.style.overflow = 'hidden';
+  toSourceCodeDiv.style.transition = `height ${heightDuration}ms ${easing} ${heightDelay}ms`;
+
+  // Use requestAnimationFrame to ensure layout is complete before animating
+  requestAnimationFrame(() => {
+    toSourceCodeDiv.style.height = `${toHeightCSS}px`;
+  });
 
   function transitionFor(sched) {
     const props = ['left', 'top', 'opacity'];
@@ -426,7 +449,7 @@ function animateSlideMagicMove(fromSlide, toSlide, fromStep, toStep, overlay, de
   // rather than a hardcoded total.
   const allEndTimes = scheduled.map(entry => entry.startMs + entry.durationMs);
   allEndTimes.push(resolvedOptions.delayContainer * duration + duration); // container/default reference
-  allEndTimes.push(duration); // height transition itself
+  allEndTimes.push(heightDelay + heightDuration); // height transition itself
   const cleanupDelay = Math.max(...allEndTimes) + 50; // small buffer, matches original's +50ms
 
   setTimeout(() => {
@@ -584,11 +607,11 @@ async function inlineSvgImages(slide) {
   const svgImages = slide.querySelectorAll('img[src$=".svg"], img[data-src$=".svg"]');
 
   for (const img of svgImages) {
-    try {
-      // Use src if available, otherwise data-src (for lazy-loaded images)
-      const svgUrl = img.src || img.getAttribute('data-src');
-      if (!svgUrl || !svgUrl.endsWith('.svg')) continue;
+    // Use src if available, otherwise data-src (for lazy-loaded images)
+    const svgUrl = img.src || img.getAttribute('data-src');
+    if (!svgUrl || !svgUrl.endsWith('.svg')) continue;
 
+    try {
       // Capture computed dimensions BEFORE replacing
       const computedStyle = window.getComputedStyle(img);
       const rect = img.getBoundingClientRect();
@@ -1028,6 +1051,13 @@ function matchSvgPaths(fromPaths, toPaths) {
   const fromByType = groupPathsByType(unclippedFrom);
   const toByType = groupPathsByType(unclippedTo);
 
+  // Paths that are paired up here but turn out to be pixel-identical (e.g. an
+  // unmoved geom_point among moved ones) still need to be taken out of
+  // circulation, otherwise the third pass's looser fill-only matching scoops
+  // them up and pairs them with some unrelated same-color path, animating a
+  // spurious "swap" between two points that never actually moved.
+  const handledFrom = new Set();
+
   for (const type of Object.keys(fromByType)) {
     const fromGroup = fromByType[type] || [];
     const toGroup = toByType[type] || [];
@@ -1037,12 +1067,14 @@ function matchSvgPaths(fromPaths, toPaths) {
       const fromPath = fromGroup[i];
       const toPath = toGroup[i];
 
+      handledFrom.add(fromPath.element);
+      usedTo.add(toPaths.indexOf(toPath));
+
       if (fromPath.d !== toPath.d) {
         matches.push({
           fromPath: fromPath.element,
           toPath: toPath.element
         });
-        usedTo.add(toPaths.indexOf(toPath));
       }
     }
   }
@@ -1050,7 +1082,7 @@ function matchSvgPaths(fromPaths, toPaths) {
   // Third pass: match remaining paths by fill color only (for shape morphing like bar->pie)
   // This allows morphing between paths with different structures
   const remainingFrom = fromPaths.filter(p =>
-    !matches.some(m => m.fromPath === p.element)
+    !matches.some(m => m.fromPath === p.element) && !handledFrom.has(p.element)
   );
 
   for (const fromPath of remainingFrom) {
@@ -3031,9 +3063,9 @@ function animateToStep(container, fromStep, toStep, options = {}) {
 
   // Container height animation: measure the wrapper's current ("from") height before
   // anything changes, so it can be animated to the new step's natural height below —
-  // same FLIP-style measure-before/measure-after as the token positions, and anchored
-  // to the same startMs 0 / `duration` timeline as token moves by default, so the box
-  // and its contents visibly resize together rather than one lagging the other.
+  // same FLIP-style measure-before/measure-after as the token positions. Its actual
+  // start/duration are computed further down from the full token schedule, so it
+  // tracks whatever `delay-exit`/`delay-move`/`stagger` spreads the content over.
   const { duration = 500, easing = 'ease-in-out' } = options;
   const fromWrapperHeight = wrapper.getBoundingClientRect().height;
 
@@ -3048,9 +3080,8 @@ function animateToStep(container, fromStep, toStep, options = {}) {
   // Plan: what happens (exit/move/enter), independent of the DOM.
   // Schedule: when each of those happens, from the (possibly per-container) timing config.
   const plan = buildAnimationPlan(fromStep, toStep);
-  const scheduleByKey = new Map(
-    scheduleAnimationPlan(plan, options).map(entry => [entry.key, entry])
-  );
+  const scheduleList = scheduleAnimationPlan(plan, options);
+  const scheduleByKey = new Map(scheduleList.map(entry => [entry.key, entry]));
   const defaultSchedule = { startMs: 0, durationMs: 500, easing: 'ease-in-out' };
 
   // Removed tokens are about to be wiped by the DOM swap below, so clone them onto an
@@ -3091,14 +3122,40 @@ function animateToStep(container, fromStep, toStep, options = {}) {
 
   // Animate the wrapper's own height between its pre-render ("from") and just-laid-out
   // ("to") natural sizes — the container-level counterpart of the token FLIP dance
-  // below. Using the same base `duration`/`easing` and no start delay means it runs on
-  // exactly the same startMs-0 timeline as (default, undelayed) token moves, so the box
-  // and its contents resize in lockstep rather than one lagging the other.
+  // below. Unlike entering/exiting tokens (whose *opacity* animates, so they're only
+  // actually visible once their own schedule says so), a moved token is rendered at
+  // its true final position from the moment `renderStep` runs and is fully "there"
+  // the instant its own FLIP transform finishes — it isn't gated by anything else.
+  // So if `move` ops exist, sync the box's height window to exactly their [start, end]:
+  // by the time the last move settles, the box needs to already be sized to contain it
+  // (growing) or have already closed around it (shrinking). Sizing off the *whole*
+  // schedule instead (as this used to) either starts a shrink too early (while an exit clone /
+  // still-moving row still needs the old, larger box) or finishes a grow too late
+  // (after a move has already landed a row past the box's current, still-too-small
+  // edge). Falls back to the exit window (shrink) or enter window (grow) when there's
+  // no move to anchor to, or plain [0, duration] if the plan has no ops at all. With
+  // every delay/stagger option at 0 every case collapses back to exactly
+  // [0, duration], matching the pre-schedule-aware behavior.
   const toWrapperHeight = wrapper.getBoundingClientRect().height;
   let heightAnimFinished = Promise.resolve();
   if (Math.abs(fromWrapperHeight - toWrapperHeight) > 0.5) {
     const fromHeightCSS = fromWrapperHeight / scale;
     const toHeightCSS = toWrapperHeight / scale;
+    let heightDelay = 0;
+    let heightDuration = duration;
+    if (scheduleList.length) {
+      const moveEntries = scheduleList.filter(entry => entry.type === 'move');
+      let relevant = moveEntries;
+      if (!relevant.length) {
+        const fallbackType = toWrapperHeight < fromWrapperHeight ? 'exit' : 'enter';
+        relevant = scheduleList.filter(entry => entry.type === fallbackType);
+      }
+      if (!relevant.length) relevant = scheduleList;
+      const starts = relevant.map(entry => entry.startMs);
+      const ends = relevant.map(entry => entry.startMs + entry.durationMs);
+      heightDelay = Math.min(...starts);
+      heightDuration = Math.max(...ends) - heightDelay;
+    }
     // The wrapper has a permanent `overflow: hidden` (magic-move.css) that used to
     // never actually clip anything, because the wrapper was always pre-sized to fit
     // the tallest step. Now that its height animates, a shrinking box would otherwise
@@ -3108,7 +3165,7 @@ function animateToStep(container, fromStep, toStep, options = {}) {
     wrapper.style.overflow = 'visible';
     const heightAnim = wrapper.animate(
       [{ height: `${fromHeightCSS}px` }, { height: `${toHeightCSS}px` }],
-      { duration, easing, fill: 'backwards' }
+      { duration: heightDuration, delay: heightDelay, easing, fill: 'backwards' }
     );
     heightAnimFinished = heightAnim.finished.catch(() => {});
   }

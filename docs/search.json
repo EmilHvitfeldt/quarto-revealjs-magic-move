@@ -1,5 +1,495 @@
 [
   {
+    "objectID": "examples/svgs-js.html#not-yet-supported",
+    "href": "examples/svgs-js.html#not-yet-supported",
+    "title": "OJS SVG Magic Move Demo",
+    "section": "Not Yet Supported",
+    "text": "Not Yet Supported\nNone of the sequences on this page currently animate — every transition below hard-cuts instead of morphing. D3, Observable Plot, and Vega-Lite (via {ojs}) all produce fully compatible SVG shapes (&lt;circle&gt;, &lt;rect&gt;, &lt;path&gt;, &lt;line&gt;, &lt;text&gt;), but Quarto’s Observable JS cells render after Reveal’s ready event, while this extension only scans for SVG content once, synchronously, at ready. So the SVG magic-move feature never activates for {ojs}-rendered charts, regardless of shape compatibility. Kept here as a reference for what real {ojs}-rendered SVG looks like, pending a fix upstream."
+  },
+  {
+    "objectID": "examples/svgs-js.html#d3-shapes---position-1",
+    "href": "examples/svgs-js.html#d3-shapes---position-1",
+    "title": "OJS SVG Magic Move Demo",
+    "section": "D3 Shapes - Position 1",
+    "text": "D3 Shapes - Position 1\n\n{\n  const svg = d3.create(\"svg\").attr(\"width\", 400).attr(\"height\", 300);\n  svg.append(\"circle\").attr(\"cx\", 80).attr(\"cy\", 80).attr(\"r\", 30).attr(\"fill\", \"steelblue\");\n  svg.append(\"rect\").attr(\"x\", 200).attr(\"y\", 180).attr(\"width\", 60).attr(\"height\", 40).attr(\"fill\", \"coral\");\n  return svg.node();\n}"
+  },
+  {
+    "objectID": "examples/svgs-js.html#d3-shapes---position-2",
+    "href": "examples/svgs-js.html#d3-shapes---position-2",
+    "title": "OJS SVG Magic Move Demo",
+    "section": "D3 Shapes - Position 2",
+    "text": "D3 Shapes - Position 2\n\n{\n  const svg = d3.create(\"svg\").attr(\"width\", 400).attr(\"height\", 300);\n  svg.append(\"circle\").attr(\"cx\", 300).attr(\"cy\", 200).attr(\"r\", 50).attr(\"fill\", \"steelblue\");\n  svg.append(\"rect\").attr(\"x\", 40).attr(\"y\", 40).attr(\"width\", 100).attr(\"height\", 25).attr(\"fill\", \"coral\");\n  return svg.node();\n}"
+  },
+  {
+    "objectID": "examples/svgs-js.html#break",
+    "href": "examples/svgs-js.html#break",
+    "title": "OJS SVG Magic Move Demo",
+    "section": "Break",
+    "text": "Break"
+  },
+  {
+    "objectID": "examples/svgs-js.html#observable-plot---dots-low",
+    "href": "examples/svgs-js.html#observable-plot---dots-low",
+    "title": "OJS SVG Magic Move Demo",
+    "section": "Observable Plot - Dots Low",
+    "text": "Observable Plot - Dots Low\n\nPlot.plot({\n  width: 500,\n  height: 350,\n  marks: [\n    Plot.dot([{x: 1, y: 1}, {x: 2, y: 1.2}, {x: 3, y: 1}], {x: \"x\", y: \"y\", r: 10, fill: \"steelblue\"})\n  ]\n})"
+  },
+  {
+    "objectID": "examples/svgs-js.html#observable-plot---dots-high",
+    "href": "examples/svgs-js.html#observable-plot---dots-high",
+    "title": "OJS SVG Magic Move Demo",
+    "section": "Observable Plot - Dots High",
+    "text": "Observable Plot - Dots High\n\nPlot.plot({\n  width: 500,\n  height: 350,\n  marks: [\n    Plot.dot([{x: 1, y: 3}, {x: 2, y: 3.5}, {x: 3, y: 3}], {x: \"x\", y: \"y\", r: 10, fill: \"steelblue\"})\n  ]\n})"
+  },
+  {
+    "objectID": "examples/svgs-js.html#break-1",
+    "href": "examples/svgs-js.html#break-1",
+    "title": "OJS SVG Magic Move Demo",
+    "section": "Break",
+    "text": "Break"
+  },
+  {
+    "objectID": "examples/svgs-js.html#vega-lite-points---layout-1",
+    "href": "examples/svgs-js.html#vega-lite-points---layout-1",
+    "title": "OJS SVG Magic Move Demo",
+    "section": "Vega-Lite Points - Layout 1",
+    "text": "Vega-Lite Points - Layout 1\n\nvegaEmbed = require(\"vega-embed@6\")\n\n\n\n\n\n\n\nvlSpecA = ({\n  $schema: \"https://vega.github.io/schema/vega-lite/v5.json\",\n  width: 400,\n  height: 300,\n  data: {values: [{x: 1, y: 1}, {x: 2, y: 3}, {x: 3, y: 2}]},\n  mark: \"point\",\n  encoding: {\n    x: {field: \"x\", type: \"quantitative\"},\n    y: {field: \"y\", type: \"quantitative\"}\n  }\n})\n\n\n\n\n\n\n\n{\n  const div = document.createElement(\"div\");\n  await vegaEmbed(div, vlSpecA, {renderer: \"svg\", actions: false});\n  return div;\n}"
+  },
+  {
+    "objectID": "examples/svgs-js.html#vega-lite-points---layout-2",
+    "href": "examples/svgs-js.html#vega-lite-points---layout-2",
+    "title": "OJS SVG Magic Move Demo",
+    "section": "Vega-Lite Points - Layout 2",
+    "text": "Vega-Lite Points - Layout 2\n\nvlSpecB = ({\n  $schema: \"https://vega.github.io/schema/vega-lite/v5.json\",\n  width: 400,\n  height: 300,\n  data: {values: [{x: 1, y: 3}, {x: 2, y: 1}, {x: 3, y: 3}]},\n  mark: \"point\",\n  encoding: {\n    x: {field: \"x\", type: \"quantitative\"},\n    y: {field: \"y\", type: \"quantitative\"}\n  }\n})\n\n\n\n\n\n\n\n{\n  const div = document.createElement(\"div\");\n  await vegaEmbed(div, vlSpecB, {renderer: \"svg\", actions: false});\n  return div;\n}"
+  },
+  {
+    "objectID": "examples/svgs-python.html#matplotlib-bar-chart---low",
+    "href": "examples/svgs-python.html#matplotlib-bar-chart---low",
+    "title": "Python SVG Magic Move Demo",
+    "section": "Matplotlib Bar Chart - Low",
+    "text": "Matplotlib Bar Chart - Low"
+  },
+  {
+    "objectID": "examples/svgs-python.html#matplotlib-bar-chart---shuffled",
+    "href": "examples/svgs-python.html#matplotlib-bar-chart---shuffled",
+    "title": "Python SVG Magic Move Demo",
+    "section": "Matplotlib Bar Chart - Shuffled",
+    "text": "Matplotlib Bar Chart - Shuffled"
+  },
+  {
+    "objectID": "examples/svgs-python.html#break",
+    "href": "examples/svgs-python.html#break",
+    "title": "Python SVG Magic Move Demo",
+    "section": "Break",
+    "text": "Break"
+  },
+  {
+    "objectID": "examples/svgs-python.html#matplotlib-line-chart---wave-1",
+    "href": "examples/svgs-python.html#matplotlib-line-chart---wave-1",
+    "title": "Python SVG Magic Move Demo",
+    "section": "Matplotlib Line Chart - Wave 1",
+    "text": "Matplotlib Line Chart - Wave 1"
+  },
+  {
+    "objectID": "examples/svgs-python.html#matplotlib-line-chart---wave-2",
+    "href": "examples/svgs-python.html#matplotlib-line-chart---wave-2",
+    "title": "Python SVG Magic Move Demo",
+    "section": "Matplotlib Line Chart - Wave 2",
+    "text": "Matplotlib Line Chart - Wave 2"
+  },
+  {
+    "objectID": "examples/svgs-python.html#break-1",
+    "href": "examples/svgs-python.html#break-1",
+    "title": "Python SVG Magic Move Demo",
+    "section": "Break",
+    "text": "Break"
+  },
+  {
+    "objectID": "examples/svgs-python.html#matplotlib-area-chart---normal",
+    "href": "examples/svgs-python.html#matplotlib-area-chart---normal",
+    "title": "Python SVG Magic Move Demo",
+    "section": "Matplotlib Area Chart - Normal",
+    "text": "Matplotlib Area Chart - Normal"
+  },
+  {
+    "objectID": "examples/svgs-python.html#matplotlib-area-chart---shifted",
+    "href": "examples/svgs-python.html#matplotlib-area-chart---shifted",
+    "title": "Python SVG Magic Move Demo",
+    "section": "Matplotlib Area Chart - Shifted",
+    "text": "Matplotlib Area Chart - Shifted"
+  },
+  {
+    "objectID": "examples/svgs-python.html#break-2",
+    "href": "examples/svgs-python.html#break-2",
+    "title": "Python SVG Magic Move Demo",
+    "section": "Break",
+    "text": "Break"
+  },
+  {
+    "objectID": "examples/svgs-python.html#seaborn-bar-chart---low",
+    "href": "examples/svgs-python.html#seaborn-bar-chart---low",
+    "title": "Python SVG Magic Move Demo",
+    "section": "Seaborn Bar Chart - Low",
+    "text": "Seaborn Bar Chart - Low"
+  },
+  {
+    "objectID": "examples/svgs-python.html#seaborn-bar-chart---shuffled",
+    "href": "examples/svgs-python.html#seaborn-bar-chart---shuffled",
+    "title": "Python SVG Magic Move Demo",
+    "section": "Seaborn Bar Chart - Shuffled",
+    "text": "Seaborn Bar Chart - Shuffled"
+  },
+  {
+    "objectID": "examples/svgs-python.html#break-3",
+    "href": "examples/svgs-python.html#break-3",
+    "title": "Python SVG Magic Move Demo",
+    "section": "Break",
+    "text": "Break"
+  },
+  {
+    "objectID": "examples/svgs-python.html#plotnine-bar-chart---low",
+    "href": "examples/svgs-python.html#plotnine-bar-chart---low",
+    "title": "Python SVG Magic Move Demo",
+    "section": "Plotnine Bar Chart - Low",
+    "text": "Plotnine Bar Chart - Low"
+  },
+  {
+    "objectID": "examples/svgs-python.html#plotnine-bar-chart---shuffled",
+    "href": "examples/svgs-python.html#plotnine-bar-chart---shuffled",
+    "title": "Python SVG Magic Move Demo",
+    "section": "Plotnine Bar Chart - Shuffled",
+    "text": "Plotnine Bar Chart - Shuffled"
+  },
+  {
+    "objectID": "examples/svgs-python.html#break-4",
+    "href": "examples/svgs-python.html#break-4",
+    "title": "Python SVG Magic Move Demo",
+    "section": "Break",
+    "text": "Break"
+  },
+  {
+    "objectID": "examples/svgs-python.html#plotnine-line-chart---wave-1",
+    "href": "examples/svgs-python.html#plotnine-line-chart---wave-1",
+    "title": "Python SVG Magic Move Demo",
+    "section": "Plotnine Line Chart - Wave 1",
+    "text": "Plotnine Line Chart - Wave 1"
+  },
+  {
+    "objectID": "examples/svgs-python.html#plotnine-line-chart---wave-2",
+    "href": "examples/svgs-python.html#plotnine-line-chart---wave-2",
+    "title": "Python SVG Magic Move Demo",
+    "section": "Plotnine Line Chart - Wave 2",
+    "text": "Plotnine Line Chart - Wave 2"
+  },
+  {
+    "objectID": "examples/svgs-python.html#break-5",
+    "href": "examples/svgs-python.html#break-5",
+    "title": "Python SVG Magic Move Demo",
+    "section": "Break",
+    "text": "Break"
+  },
+  {
+    "objectID": "examples/svgs-python.html#altair-bar-chart---low",
+    "href": "examples/svgs-python.html#altair-bar-chart---low",
+    "title": "Python SVG Magic Move Demo",
+    "section": "Altair Bar Chart - Low",
+    "text": "Altair Bar Chart - Low"
+  },
+  {
+    "objectID": "examples/svgs-python.html#altair-bar-chart---shuffled",
+    "href": "examples/svgs-python.html#altair-bar-chart---shuffled",
+    "title": "Python SVG Magic Move Demo",
+    "section": "Altair Bar Chart - Shuffled",
+    "text": "Altair Bar Chart - Shuffled"
+  },
+  {
+    "objectID": "examples/svgs.html#slope-20",
+    "href": "examples/svgs.html#slope-20",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Slope = 20",
+    "text": "Slope = 20"
+  },
+  {
+    "objectID": "examples/svgs.html#slope-10",
+    "href": "examples/svgs.html#slope-10",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Slope = 10",
+    "text": "Slope = 10"
+  },
+  {
+    "objectID": "examples/svgs.html#slope-10-jitter",
+    "href": "examples/svgs.html#slope-10-jitter",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Slope = 10 + jitter",
+    "text": "Slope = 10 + jitter"
+  },
+  {
+    "objectID": "examples/svgs.html#break",
+    "href": "examples/svgs.html#break",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Break",
+    "text": "Break"
+  },
+  {
+    "objectID": "examples/svgs.html#histogram---normal",
+    "href": "examples/svgs.html#histogram---normal",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Histogram - Normal",
+    "text": "Histogram - Normal"
+  },
+  {
+    "objectID": "examples/svgs.html#histogram---shifted",
+    "href": "examples/svgs.html#histogram---shifted",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Histogram - Shifted",
+    "text": "Histogram - Shifted"
+  },
+  {
+    "objectID": "examples/svgs.html#break-1",
+    "href": "examples/svgs.html#break-1",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Break",
+    "text": "Break"
+  },
+  {
+    "objectID": "examples/svgs.html#line-segments---position-1",
+    "href": "examples/svgs.html#line-segments---position-1",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Line Segments - Position 1",
+    "text": "Line Segments - Position 1"
+  },
+  {
+    "objectID": "examples/svgs.html#line-segments---position-2",
+    "href": "examples/svgs.html#line-segments---position-2",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Line Segments - Position 2",
+    "text": "Line Segments - Position 2"
+  },
+  {
+    "objectID": "examples/svgs.html#break-2",
+    "href": "examples/svgs.html#break-2",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Break",
+    "text": "Break"
+  },
+  {
+    "objectID": "examples/svgs.html#circles-grid---small",
+    "href": "examples/svgs.html#circles-grid---small",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Circles (grid) - Small",
+    "text": "Circles (grid) - Small"
+  },
+  {
+    "objectID": "examples/svgs.html#circles-grid---large",
+    "href": "examples/svgs.html#circles-grid---large",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Circles (grid) - Large",
+    "text": "Circles (grid) - Large"
+  },
+  {
+    "objectID": "examples/svgs.html#break-3",
+    "href": "examples/svgs.html#break-3",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Break",
+    "text": "Break"
+  },
+  {
+    "objectID": "examples/svgs.html#polyline-grid---wave-1",
+    "href": "examples/svgs.html#polyline-grid---wave-1",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Polyline (grid) - Wave 1",
+    "text": "Polyline (grid) - Wave 1"
+  },
+  {
+    "objectID": "examples/svgs.html#polyline-grid---wave-2",
+    "href": "examples/svgs.html#polyline-grid---wave-2",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Polyline (grid) - Wave 2",
+    "text": "Polyline (grid) - Wave 2"
+  },
+  {
+    "objectID": "examples/svgs.html#break-4",
+    "href": "examples/svgs.html#break-4",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Break",
+    "text": "Break"
+  },
+  {
+    "objectID": "examples/svgs.html#polygon-grid---triangle",
+    "href": "examples/svgs.html#polygon-grid---triangle",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Polygon (grid) - Triangle",
+    "text": "Polygon (grid) - Triangle"
+  },
+  {
+    "objectID": "examples/svgs.html#polygon-grid---moved-triangle",
+    "href": "examples/svgs.html#polygon-grid---moved-triangle",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Polygon (grid) - Moved Triangle",
+    "text": "Polygon (grid) - Moved Triangle"
+  },
+  {
+    "objectID": "examples/svgs.html#break-5",
+    "href": "examples/svgs.html#break-5",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Break",
+    "text": "Break"
+  },
+  {
+    "objectID": "examples/svgs.html#area-chart---normal",
+    "href": "examples/svgs.html#area-chart---normal",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Area Chart - Normal",
+    "text": "Area Chart - Normal"
+  },
+  {
+    "objectID": "examples/svgs.html#area-chart---shifted",
+    "href": "examples/svgs.html#area-chart---shifted",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Area Chart - Shifted",
+    "text": "Area Chart - Shifted"
+  },
+  {
+    "objectID": "examples/svgs.html#break-6",
+    "href": "examples/svgs.html#break-6",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Break",
+    "text": "Break"
+  },
+  {
+    "objectID": "examples/svgs.html#ellipse-polygon---wide",
+    "href": "examples/svgs.html#ellipse-polygon---wide",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Ellipse (polygon) - Wide",
+    "text": "Ellipse (polygon) - Wide"
+  },
+  {
+    "objectID": "examples/svgs.html#ellipse-polygon---tall",
+    "href": "examples/svgs.html#ellipse-polygon---tall",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Ellipse (polygon) - Tall",
+    "text": "Ellipse (polygon) - Tall"
+  },
+  {
+    "objectID": "examples/svgs.html#break-7",
+    "href": "examples/svgs.html#break-7",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Break",
+    "text": "Break"
+  },
+  {
+    "objectID": "examples/svgs.html#text-grid---position-1",
+    "href": "examples/svgs.html#text-grid---position-1",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Text (grid) - Position 1",
+    "text": "Text (grid) - Position 1"
+  },
+  {
+    "objectID": "examples/svgs.html#text-grid---position-2",
+    "href": "examples/svgs.html#text-grid---position-2",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Text (grid) - Position 2",
+    "text": "Text (grid) - Position 2"
+  },
+  {
+    "objectID": "examples/svgs.html#break-8",
+    "href": "examples/svgs.html#break-8",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Break",
+    "text": "Break"
+  },
+  {
+    "objectID": "examples/svgs.html#text-labels-ggplot2---before",
+    "href": "examples/svgs.html#text-labels-ggplot2---before",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Text Labels (ggplot2) - Before",
+    "text": "Text Labels (ggplot2) - Before"
+  },
+  {
+    "objectID": "examples/svgs.html#text-labels-ggplot2---after",
+    "href": "examples/svgs.html#text-labels-ggplot2---after",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Text Labels (ggplot2) - After",
+    "text": "Text Labels (ggplot2) - After"
+  },
+  {
+    "objectID": "examples/svgs.html#break-9",
+    "href": "examples/svgs.html#break-9",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Break",
+    "text": "Break"
+  },
+  {
+    "objectID": "examples/svgs.html#bar-chart",
+    "href": "examples/svgs.html#bar-chart",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Bar Chart",
+    "text": "Bar Chart"
+  },
+  {
+    "objectID": "examples/svgs.html#pie-chart",
+    "href": "examples/svgs.html#pie-chart",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Pie Chart",
+    "text": "Pie Chart"
+  },
+  {
+    "objectID": "examples/basic.html#magic-move-example",
+    "href": "examples/basic.html#magic-move-example",
+    "title": "Magic Move Demo",
+    "section": "Magic move example",
+    "text": "Magic move example\n\nYear.Release &lt;- game$Year.Release\ncounts &lt;- data.frame(table(Year.Release))\nYear.Release &lt;- game$Year.Release\ncounts &lt;- data.frame(\n  table(Year.Release)\n)\np &lt;- game %&gt;%\n  select(Year.Release, Global.Sales)\nYear.Release &lt;- game$Year.Release\ncounts &lt;- data.frame(\n  table(Year.Release)\n)\np &lt;- game %&gt;%\n  select(Year.Release, Global.Sales) %&gt;%\n  group_by(Year.Release) %&gt;%\n  summarise(Total.Sales = sum(Global.Sales))"
+  },
+  {
+    "objectID": "examples/basic.html#another-example",
+    "href": "examples/basic.html#another-example",
+    "title": "Magic Move Demo",
+    "section": "Another example",
+    "text": "Another example\n\nif (condition) a else b\nif (condition) {\n  a\n} else {\n  b\n}"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "quarto-revealjs-magic-move",
+    "section": "",
+    "text": "Code, math, and SVG output morph smoothly between states instead of hard-cutting, so viewers can visually track what changed. Built on Quarto’s native syntax highlighting, with no external JavaScript dependencies."
+  },
+  {
+    "objectID": "index.html#installation",
+    "href": "index.html#installation",
+    "title": "quarto-revealjs-magic-move",
+    "section": "Installation",
+    "text": "Installation\nquarto add emilhvitfeldt/quarto-revealjs-magic-move\nThen add the plugin to your document’s YAML header:\n---\nformat: revealjs\nrevealjs-plugins:\n  - magic-move\n---"
+  },
+  {
+    "objectID": "index.html#usage",
+    "href": "index.html#usage",
+    "title": "quarto-revealjs-magic-move",
+    "section": "Usage",
+    "text": "Usage\nThere are two ways to mark up a magic-move sequence: div-based (fragments within a single slide) and slide-based (consecutive slides).\n\nDiv-based (fragments)\nWrap consecutive code blocks in a magic-move div. Each block becomes a step, and pressing space/arrow keys steps through the animation as fragments on one slide.\n::: magic-move\n\n```javascript\nif (condition) a else b\n```\n\n```javascript\nif (condition) {\n  a\n} else {\n  b\n}\n```\n\n:::\n\n\nSlide-based\nAdd the .magic-move class to consecutive slide headers instead. Each slide is a full step, and the animation plays as you navigate from one slide to the next.\n## Step 1 {.magic-move}\n\n```r\nx &lt;- 1\n```\n\n## Step 2 {.magic-move}\n\n```r\nx &lt;- 1\ny &lt;- 2\n```\nA slide without .magic-move breaks the sequence, so you can freely mix animated and regular slides.\n\n\nWhat can animate\nMagic-move works on:\n\nCode blocks (any language Quarto highlights) — tokens are matched and moved between states\nMath ($$ ... $$) — equations morph between steps\nSVG output — consecutive .magic-move slides that each render an inline SVG have their shapes (rect, circle, line, polyline, polygon, ellipse, path, and R-style glyph text) matched and morphed between states. This works with any plotting library whose SVG output uses plain, literal shape elements with stable attributes across renders — verified with:\n\nR: ggplot2, grid, base R graphics, lattice (all render through R’s dev: svg Cairo device)\nPython: matplotlib, seaborn, plotnine (bar/line/area marks — not scatter/point markers, see limitations), and Altair with alt.renderers.enable(\"svg\")\nJulia: CairoMakie, and Plots.jl with the GR backend (Plots.gr(fmt = :svg))"
+  },
+  {
+    "objectID": "index.html#limitations",
+    "href": "index.html#limitations",
+    "title": "quarto-revealjs-magic-move",
+    "section": "Limitations",
+    "text": "Limitations\n\nToken matching is content-based; significantly different code may fade in/out instead of animating smoothly\nCoarse tokenization from Quarto’s syntax highlighter means very fine-grained punctuation animation isn’t always perfect\nSVG shape matching has no fallback for elements whose grouping key (fill/stroke/clip-path) differs between renders. This breaks a few specific cases:\n\nPlotly (via kaleido) and ggiraph’s girafe() widgets stamp a random clip-path id on every render, so shapes never match across slides and the transition falls back to a hard cut\nGadfly.jl positions marks via an ancestor &lt;g transform&gt; rather than each element’s own coordinates, which the matcher doesn’t read\nmatplotlib/seaborn/plotnine scatter or point markers render as &lt;use&gt; glyph references rather than literal &lt;circle&gt;/&lt;path&gt; shapes, so they don’t animate (bars/lines/areas from the same libraries are unaffected)\nCharts rendered via Quarto’s Observable JS ({ojs}) engine — e.g. D3, Observable Plot, Vega-Lite — produce fully compatible SVG shapes, but render after Reveal’s ready event, while this extension only scans for SVG content once, at ready. So {ojs}-rendered charts never get picked up as a magic-move sequence at all, regardless of their SVG shape compatibility."
+  },
+  {
+    "objectID": "index.html#examples",
+    "href": "index.html#examples",
+    "title": "quarto-revealjs-magic-move",
+    "section": "Examples",
+    "text": "Examples\n\nCode — div-based fragments\n\nView Example\nSource Code\n\n\n\n\n\nCode — slide-based\n\nView Example\nSource Code\n\n\n\n\n\nSVG output — ggplot2 / grid\n\nView Example\nSource Code\n\n\n\n\n\nSVG output — other R packages\n\nView Example\nSource Code\n\n\n\n\n\nSVG output — Python\n\nView Example\nSource Code\n\n\n\n\n\nSVG output — Julia\n\nView Example\nSource Code\n\n\n\nCharts rendered via Quarto’s Observable JS ({ojs}) engine — D3, Observable Plot, Vega-Lite — don’t animate yet (see Limitations above); no example is shown here for that reason.\n\nFull Source Code"
+  },
+  {
+    "objectID": "index.html#license",
+    "href": "index.html#license",
+    "title": "quarto-revealjs-magic-move",
+    "section": "License",
+    "text": "License\nMIT"
+  },
+  {
     "objectID": "examples/slide-based.html#introduction",
     "href": "examples/slide-based.html#introduction",
     "title": "Slide-Based Magic Move Demo",
@@ -63,6 +553,20 @@
     "text": "Continued\nconst x = 1\nconst y = 2"
   },
   {
+    "objectID": "examples/slide-based.html#staggered-exit-step-1",
+    "href": "examples/slide-based.html#staggered-exit-step-1",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Staggered exit step 1",
+    "text": "Staggered exit step 1\na &lt;- 1\nb &lt;- 2\nc &lt;- 3\nd &lt;- 4"
+  },
+  {
+    "objectID": "examples/slide-based.html#staggered-exit-step-2",
+    "href": "examples/slide-based.html#staggered-exit-step-2",
+    "title": "Slide-Based Magic Move Demo",
+    "section": "Staggered exit step 2",
+    "text": "Staggered exit step 2\na &lt;- 1\nd &lt;- 4"
+  },
+  {
     "objectID": "examples/slide-based.html#end",
     "href": "examples/slide-based.html#end",
     "title": "Slide-Based Magic Move Demo",
@@ -70,59 +574,157 @@
     "text": "End\nThat’s all folks!"
   },
   {
-    "objectID": "index.html",
-    "href": "index.html",
-    "title": "quarto-revealjs-magic-move",
-    "section": "",
-    "text": "Code, math, and SVG output morph smoothly between states instead of hard-cutting, so viewers can visually track what changed. Built on Quarto’s native syntax highlighting, with no external JavaScript dependencies."
+    "objectID": "examples/svgs-r-extra.html#base-r-histogram---normal",
+    "href": "examples/svgs-r-extra.html#base-r-histogram---normal",
+    "title": "Slide-Based Magic Move Demo — Other R Plotting Packages",
+    "section": "Base R Histogram - Normal",
+    "text": "Base R Histogram - Normal"
   },
   {
-    "objectID": "index.html#installation",
-    "href": "index.html#installation",
-    "title": "quarto-revealjs-magic-move",
-    "section": "Installation",
-    "text": "Installation\nquarto add emilhvitfeldt/quarto-revealjs-magic-move\nThen add the plugin to your document’s YAML header:\n---\nformat: revealjs\nrevealjs-plugins:\n  - magic-move\n---"
+    "objectID": "examples/svgs-r-extra.html#base-r-histogram---shifted",
+    "href": "examples/svgs-r-extra.html#base-r-histogram---shifted",
+    "title": "Slide-Based Magic Move Demo — Other R Plotting Packages",
+    "section": "Base R Histogram - Shifted",
+    "text": "Base R Histogram - Shifted"
   },
   {
-    "objectID": "index.html#usage",
-    "href": "index.html#usage",
-    "title": "quarto-revealjs-magic-move",
-    "section": "Usage",
-    "text": "Usage\nThere are two ways to mark up a magic-move sequence: div-based (fragments within a single slide) and slide-based (consecutive slides).\n\nDiv-based (fragments)\nWrap consecutive code blocks in a magic-move div. Each block becomes a step, and pressing space/arrow keys steps through the animation as fragments on one slide.\n::: magic-move\n\n```javascript\nif (condition) a else b\n```\n\n```javascript\nif (condition) {\n  a\n} else {\n  b\n}\n```\n\n:::\n\n\nSlide-based\nAdd the .magic-move class to consecutive slide headers instead. Each slide is a full step, and the animation plays as you navigate from one slide to the next.\n## Step 1 {.magic-move}\n\n```r\nx &lt;- 1\n```\n\n## Step 2 {.magic-move}\n\n```r\nx &lt;- 1\ny &lt;- 2\n```\nA slide without .magic-move breaks the sequence, so you can freely mix animated and regular slides.\n\n\nWhat can animate\nMagic-move works on:\n\nCode blocks (any language Quarto highlights) — tokens are matched and moved between states\nMath ($$ ... $$) — equations morph between steps\nSVG output (e.g. dev: svg R chunks with ggplot2 or grid graphics) — shapes and paths animate between states"
+    "objectID": "examples/svgs-r-extra.html#break",
+    "href": "examples/svgs-r-extra.html#break",
+    "title": "Slide-Based Magic Move Demo — Other R Plotting Packages",
+    "section": "Break",
+    "text": "Break"
   },
   {
-    "objectID": "index.html#limitations",
-    "href": "index.html#limitations",
-    "title": "quarto-revealjs-magic-move",
-    "section": "Limitations",
-    "text": "Limitations\n\nToken matching is content-based; significantly different code may fade in/out instead of animating smoothly\nCoarse tokenization from Quarto’s syntax highlighter means very fine-grained punctuation animation isn’t always perfect"
+    "objectID": "examples/svgs-r-extra.html#base-r-scatter-line---slope-20",
+    "href": "examples/svgs-r-extra.html#base-r-scatter-line---slope-20",
+    "title": "Slide-Based Magic Move Demo — Other R Plotting Packages",
+    "section": "Base R Scatter + Line - Slope 20",
+    "text": "Base R Scatter + Line - Slope 20"
   },
   {
-    "objectID": "index.html#examples",
-    "href": "index.html#examples",
-    "title": "quarto-revealjs-magic-move",
-    "section": "Examples",
-    "text": "Examples\n\nCode — div-based fragments\n\nView Example\nSource Code\n\n\n\n\n\nCode — slide-based\n\nView Example\nSource Code\n\n\n\n\nFull Source Code"
+    "objectID": "examples/svgs-r-extra.html#base-r-scatter-line---slope-10",
+    "href": "examples/svgs-r-extra.html#base-r-scatter-line---slope-10",
+    "title": "Slide-Based Magic Move Demo — Other R Plotting Packages",
+    "section": "Base R Scatter + Line - Slope 10",
+    "text": "Base R Scatter + Line - Slope 10"
   },
   {
-    "objectID": "index.html#license",
-    "href": "index.html#license",
-    "title": "quarto-revealjs-magic-move",
-    "section": "License",
-    "text": "License\nMIT"
+    "objectID": "examples/svgs-r-extra.html#break-1",
+    "href": "examples/svgs-r-extra.html#break-1",
+    "title": "Slide-Based Magic Move Demo — Other R Plotting Packages",
+    "section": "Break",
+    "text": "Break"
   },
   {
-    "objectID": "examples/basic.html#magic-move-example",
-    "href": "examples/basic.html#magic-move-example",
-    "title": "Magic Move Demo",
-    "section": "Magic move example",
-    "text": "Magic move example\n\nYear.Release &lt;- game$Year.Release\ncounts &lt;- data.frame(table(Year.Release))\nYear.Release &lt;- game$Year.Release\ncounts &lt;- data.frame(\n  table(Year.Release)\n)\np &lt;- game %&gt;%\n  select(Year.Release, Global.Sales)\nYear.Release &lt;- game$Year.Release\ncounts &lt;- data.frame(\n  table(Year.Release)\n)\np &lt;- game %&gt;%\n  select(Year.Release, Global.Sales) %&gt;%\n  group_by(Year.Release) %&gt;%\n  summarise(Total.Sales = sum(Global.Sales))"
+    "objectID": "examples/svgs-r-extra.html#base-r-barplot---version-1",
+    "href": "examples/svgs-r-extra.html#base-r-barplot---version-1",
+    "title": "Slide-Based Magic Move Demo — Other R Plotting Packages",
+    "section": "Base R Barplot - Version 1",
+    "text": "Base R Barplot - Version 1"
   },
   {
-    "objectID": "examples/basic.html#another-example",
-    "href": "examples/basic.html#another-example",
-    "title": "Magic Move Demo",
-    "section": "Another example",
-    "text": "Another example\n\nif (condition) a else b\nif (condition) {\n  a\n} else {\n  b\n}"
+    "objectID": "examples/svgs-r-extra.html#base-r-barplot---version-2",
+    "href": "examples/svgs-r-extra.html#base-r-barplot---version-2",
+    "title": "Slide-Based Magic Move Demo — Other R Plotting Packages",
+    "section": "Base R Barplot - Version 2",
+    "text": "Base R Barplot - Version 2"
+  },
+  {
+    "objectID": "examples/svgs-r-extra.html#break-2",
+    "href": "examples/svgs-r-extra.html#break-2",
+    "title": "Slide-Based Magic Move Demo — Other R Plotting Packages",
+    "section": "Break",
+    "text": "Break"
+  },
+  {
+    "objectID": "examples/svgs-r-extra.html#lattice-scatter---position-1",
+    "href": "examples/svgs-r-extra.html#lattice-scatter---position-1",
+    "title": "Slide-Based Magic Move Demo — Other R Plotting Packages",
+    "section": "Lattice Scatter - Position 1",
+    "text": "Lattice Scatter - Position 1"
+  },
+  {
+    "objectID": "examples/svgs-r-extra.html#lattice-scatter---position-2",
+    "href": "examples/svgs-r-extra.html#lattice-scatter---position-2",
+    "title": "Slide-Based Magic Move Demo — Other R Plotting Packages",
+    "section": "Lattice Scatter - Position 2",
+    "text": "Lattice Scatter - Position 2"
+  },
+  {
+    "objectID": "examples/svgs-r-extra.html#break-3",
+    "href": "examples/svgs-r-extra.html#break-3",
+    "title": "Slide-Based Magic Move Demo — Other R Plotting Packages",
+    "section": "Break",
+    "text": "Break"
+  },
+  {
+    "objectID": "examples/svgs-r-extra.html#lattice-barchart---version-1",
+    "href": "examples/svgs-r-extra.html#lattice-barchart---version-1",
+    "title": "Slide-Based Magic Move Demo — Other R Plotting Packages",
+    "section": "Lattice Barchart - Version 1",
+    "text": "Lattice Barchart - Version 1"
+  },
+  {
+    "objectID": "examples/svgs-r-extra.html#lattice-barchart---version-2",
+    "href": "examples/svgs-r-extra.html#lattice-barchart---version-2",
+    "title": "Slide-Based Magic Move Demo — Other R Plotting Packages",
+    "section": "Lattice Barchart - Version 2",
+    "text": "Lattice Barchart - Version 2"
+  },
+  {
+    "objectID": "examples/svgs-r-extra.html#break-4",
+    "href": "examples/svgs-r-extra.html#break-4",
+    "title": "Slide-Based Magic Move Demo — Other R Plotting Packages",
+    "section": "Break",
+    "text": "Break\nKnown limitation: ggiraph::girafe() widgets below render real &lt;circle&gt; elements, but each render stamps a random clip-path id onto them. Since two independently-rendered widgets never share that id, the shape matcher finds no pairs to morph and this transition hard-cuts instead of animating — shown here for transparency, not as a bug in this example."
+  },
+  {
+    "objectID": "examples/svgs-r-extra.html#ggiraph-points---position-1",
+    "href": "examples/svgs-r-extra.html#ggiraph-points---position-1",
+    "title": "Slide-Based Magic Move Demo — Other R Plotting Packages",
+    "section": "ggiraph Points - Position 1",
+    "text": "ggiraph Points - Position 1"
+  },
+  {
+    "objectID": "examples/svgs-r-extra.html#ggiraph-points---position-2",
+    "href": "examples/svgs-r-extra.html#ggiraph-points---position-2",
+    "title": "Slide-Based Magic Move Demo — Other R Plotting Packages",
+    "section": "ggiraph Points - Position 2",
+    "text": "ggiraph Points - Position 2"
+  },
+  {
+    "objectID": "examples/svgs-julia.html#cairomakie-points---low",
+    "href": "examples/svgs-julia.html#cairomakie-points---low",
+    "title": "Julia SVG Magic Move Demo",
+    "section": "CairoMakie Points - Low",
+    "text": "CairoMakie Points - Low"
+  },
+  {
+    "objectID": "examples/svgs-julia.html#cairomakie-points---high",
+    "href": "examples/svgs-julia.html#cairomakie-points---high",
+    "title": "Julia SVG Magic Move Demo",
+    "section": "CairoMakie Points - High",
+    "text": "CairoMakie Points - High"
+  },
+  {
+    "objectID": "examples/svgs-julia.html#break",
+    "href": "examples/svgs-julia.html#break",
+    "title": "Julia SVG Magic Move Demo",
+    "section": "Break",
+    "text": "Break"
+  },
+  {
+    "objectID": "examples/svgs-julia.html#gr-plots.jl-points---left",
+    "href": "examples/svgs-julia.html#gr-plots.jl-points---left",
+    "title": "Julia SVG Magic Move Demo",
+    "section": "GR (Plots.jl) Points - Left",
+    "text": "GR (Plots.jl) Points - Left"
+  },
+  {
+    "objectID": "examples/svgs-julia.html#gr-plots.jl-points---right",
+    "href": "examples/svgs-julia.html#gr-plots.jl-points---right",
+    "title": "Julia SVG Magic Move Demo",
+    "section": "GR (Plots.jl) Points - Right",
+    "text": "GR (Plots.jl) Points - Right"
   }
 ]

@@ -158,6 +158,13 @@ print(barchart(
 
 ## Break
 
+**Known limitation:** `ggiraph::girafe()` widgets below render real
+`<circle>` elements, but each render stamps a random clip-path id onto
+them. Since two independently-rendered widgets never share that id, the
+shape matcher finds no pairs to morph and this transition **hard-cuts**
+instead of animating — shown here for transparency, not as a bug in this
+example.
+
 ## ggiraph Points - Position 1 {.magic-move}
 
 ```{r}

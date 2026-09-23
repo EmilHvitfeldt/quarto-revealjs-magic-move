@@ -32,6 +32,18 @@ settles. No Playwright morph tests were added for this file since there is
 currently no morph to test — see the Part B write-up for details.
 -->
 
+## Not Yet Supported
+
+None of the sequences on this page currently animate — every transition
+below **hard-cuts** instead of morphing. D3, Observable Plot, and
+Vega-Lite (via `{ojs}`) all produce fully compatible SVG shapes
+(`<circle>`, `<rect>`, `<path>`, `<line>`, `<text>`), but Quarto's
+Observable JS cells render *after* Reveal's `ready` event, while this
+extension only scans for SVG content once, synchronously, at `ready`. So
+the SVG magic-move feature never activates for `{ojs}`-rendered charts,
+regardless of shape compatibility. Kept here as a reference for what
+real `{ojs}`-rendered SVG looks like, pending a fix upstream.
+
 ## D3 Shapes - Position 1 {.magic-move}
 
 ```{ojs}
