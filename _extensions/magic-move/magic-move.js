@@ -1051,6 +1051,13 @@ function matchSvgPaths(fromPaths, toPaths) {
   const fromByType = groupPathsByType(unclippedFrom);
   const toByType = groupPathsByType(unclippedTo);
 
+  // Paths that are paired up here but turn out to be pixel-identical (e.g. an
+  // unmoved geom_point among moved ones) still need to be taken out of
+  // circulation, otherwise the third pass's looser fill-only matching scoops
+  // them up and pairs them with some unrelated same-color path, animating a
+  // spurious "swap" between two points that never actually moved.
+  const handledFrom = new Set();
+
   for (const type of Object.keys(fromByType)) {
     const fromGroup = fromByType[type] || [];
     const toGroup = toByType[type] || [];
@@ -1060,12 +1067,14 @@ function matchSvgPaths(fromPaths, toPaths) {
       const fromPath = fromGroup[i];
       const toPath = toGroup[i];
 
+      handledFrom.add(fromPath.element);
+      usedTo.add(toPaths.indexOf(toPath));
+
       if (fromPath.d !== toPath.d) {
         matches.push({
           fromPath: fromPath.element,
           toPath: toPath.element
         });
-        usedTo.add(toPaths.indexOf(toPath));
       }
     }
   }
@@ -1073,7 +1082,7 @@ function matchSvgPaths(fromPaths, toPaths) {
   // Third pass: match remaining paths by fill color only (for shape morphing like bar->pie)
   // This allows morphing between paths with different structures
   const remainingFrom = fromPaths.filter(p =>
-    !matches.some(m => m.fromPath === p.element)
+    !matches.some(m => m.fromPath === p.element) && !handledFrom.has(p.element)
   );
 
   for (const fromPath of remainingFrom) {
