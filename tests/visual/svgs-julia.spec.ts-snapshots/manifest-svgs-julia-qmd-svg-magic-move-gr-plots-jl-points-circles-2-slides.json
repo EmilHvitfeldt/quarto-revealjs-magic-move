@@ -1,0 +1,58 @@
+{
+  "key": "svgs-julia-qmd-svg-magic-move-gr-plots-jl-points-circles-2-slides",
+  "title": "GR/Plots.jl points (circles, 2 slides)",
+  "frames": [
+    {
+      "name": "gr-step1-initial.png",
+      "label": "Step 1 (initial)"
+    },
+    {
+      "name": "gr-step2-0ms.png",
+      "label": "Step 2 @ 0ms"
+    },
+    {
+      "name": "gr-step2-100ms.png",
+      "label": "Step 2 @ 100ms"
+    },
+    {
+      "name": "gr-step2-250ms.png",
+      "label": "Step 2 @ 250ms"
+    },
+    {
+      "name": "gr-step2-450ms.png",
+      "label": "Step 2 @ 450ms"
+    },
+    {
+      "name": "gr-step2-700ms.png",
+      "label": "Step 2 @ 700ms"
+    },
+    {
+      "name": "gr-step2-950ms.png",
+      "label": "Step 2 @ 950ms"
+    },
+    {
+      "name": "gr-back-step1-0ms.png",
+      "label": "Back to step 1 @ 0ms"
+    },
+    {
+      "name": "gr-back-step1-100ms.png",
+      "label": "Back to step 1 @ 100ms"
+    },
+    {
+      "name": "gr-back-step1-250ms.png",
+      "label": "Back to step 1 @ 250ms"
+    },
+    {
+      "name": "gr-back-step1-450ms.png",
+      "label": "Back to step 1 @ 450ms"
+    },
+    {
+      "name": "gr-back-step1-700ms.png",
+      "label": "Back to step 1 @ 700ms"
+    },
+    {
+      "name": "gr-back-step1-950ms.png",
+      "label": "Back to step 1 @ 950ms"
+    }
+  ]
+}

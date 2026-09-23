@@ -62,9 +62,11 @@ export async function gotoSlide(page: Page, path: string, sectionId: string) {
 // animation at all. "pie-chart" is examples/svgs.qmd's last magic-move
 // slide in document order, so waiting for its SVG to be inlined is a
 // reliable proxy for "the whole page's SVG magic-move is ready",
-// regardless of which sequence a given test is about.
-export async function waitForSvgMagicMoveReady(page: Page) {
-  await page.locator('#pie-chart svg[data-inlined="true"]').waitFor({ state: 'attached' });
+// regardless of which sequence a given test is about. Callers targeting a
+// different document (e.g. examples/svgs-python.qmd) pass that document's
+// own last magic-move slide id instead.
+export async function waitForSvgMagicMoveReady(page: Page, lastSlideId: string = 'pie-chart') {
+  await page.locator(`#${lastSlideId} svg[data-inlined="true"]`).waitFor({ state: 'attached' });
 }
 
 export async function goNext(page: Page) {

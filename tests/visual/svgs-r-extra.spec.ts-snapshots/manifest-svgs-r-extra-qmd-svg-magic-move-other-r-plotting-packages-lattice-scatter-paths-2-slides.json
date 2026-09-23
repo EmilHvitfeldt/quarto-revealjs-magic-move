@@ -1,0 +1,58 @@
+{
+  "key": "svgs-r-extra-qmd-svg-magic-move-other-r-plotting-packages-lattice-scatter-paths-2-slides",
+  "title": "Lattice scatter (paths, 2 slides)",
+  "frames": [
+    {
+      "name": "lattice-xy-step1-initial.png",
+      "label": "Step 1 (initial)"
+    },
+    {
+      "name": "lattice-xy-step2-0ms.png",
+      "label": "Step 2 @ 0ms"
+    },
+    {
+      "name": "lattice-xy-step2-100ms.png",
+      "label": "Step 2 @ 100ms"
+    },
+    {
+      "name": "lattice-xy-step2-250ms.png",
+      "label": "Step 2 @ 250ms"
+    },
+    {
+      "name": "lattice-xy-step2-450ms.png",
+      "label": "Step 2 @ 450ms"
+    },
+    {
+      "name": "lattice-xy-step2-700ms.png",
+      "label": "Step 2 @ 700ms"
+    },
+    {
+      "name": "lattice-xy-step2-950ms.png",
+      "label": "Step 2 @ 950ms"
+    },
+    {
+      "name": "lattice-xy-back-step1-0ms.png",
+      "label": "Back to step 1 @ 0ms"
+    },
+    {
+      "name": "lattice-xy-back-step1-100ms.png",
+      "label": "Back to step 1 @ 100ms"
+    },
+    {
+      "name": "lattice-xy-back-step1-250ms.png",
+      "label": "Back to step 1 @ 250ms"
+    },
+    {
+      "name": "lattice-xy-back-step1-450ms.png",
+      "label": "Back to step 1 @ 450ms"
+    },
+    {
+      "name": "lattice-xy-back-step1-700ms.png",
+      "label": "Back to step 1 @ 700ms"
+    },
+    {
+      "name": "lattice-xy-back-step1-950ms.png",
+      "label": "Back to step 1 @ 950ms"
+    }
+  ]
+}

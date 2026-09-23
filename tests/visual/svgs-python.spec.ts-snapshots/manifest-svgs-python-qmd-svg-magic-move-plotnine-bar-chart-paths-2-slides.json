@@ -1,0 +1,58 @@
+{
+  "key": "svgs-python-qmd-svg-magic-move-plotnine-bar-chart-paths-2-slides",
+  "title": "Plotnine bar chart (paths, 2 slides)",
+  "frames": [
+    {
+      "name": "plotnine-bar-step1-initial.png",
+      "label": "Step 1 (initial)"
+    },
+    {
+      "name": "plotnine-bar-step2-0ms.png",
+      "label": "Step 2 @ 0ms"
+    },
+    {
+      "name": "plotnine-bar-step2-100ms.png",
+      "label": "Step 2 @ 100ms"
+    },
+    {
+      "name": "plotnine-bar-step2-250ms.png",
+      "label": "Step 2 @ 250ms"
+    },
+    {
+      "name": "plotnine-bar-step2-450ms.png",
+      "label": "Step 2 @ 450ms"
+    },
+    {
+      "name": "plotnine-bar-step2-700ms.png",
+      "label": "Step 2 @ 700ms"
+    },
+    {
+      "name": "plotnine-bar-step2-950ms.png",
+      "label": "Step 2 @ 950ms"
+    },
+    {
+      "name": "plotnine-bar-back-step1-0ms.png",
+      "label": "Back to step 1 @ 0ms"
+    },
+    {
+      "name": "plotnine-bar-back-step1-100ms.png",
+      "label": "Back to step 1 @ 100ms"
+    },
+    {
+      "name": "plotnine-bar-back-step1-250ms.png",
+      "label": "Back to step 1 @ 250ms"
+    },
+    {
+      "name": "plotnine-bar-back-step1-450ms.png",
+      "label": "Back to step 1 @ 450ms"
+    },
+    {
+      "name": "plotnine-bar-back-step1-700ms.png",
+      "label": "Back to step 1 @ 700ms"
+    },
+    {
+      "name": "plotnine-bar-back-step1-950ms.png",
+      "label": "Back to step 1 @ 950ms"
+    }
+  ]
+}

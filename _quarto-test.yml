@@ -9,3 +9,7 @@ project:
     - examples/slide-based.qmd
     - examples/mathjax.qmd
     - examples/svgs.qmd
+    - examples/svgs-r-extra.qmd
+    - examples/svgs-python.qmd
+    - examples/svgs-julia.qmd
+    - examples/svgs-js.qmd
