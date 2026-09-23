@@ -1,0 +1,7 @@
+jupyter
+matplotlib
+seaborn
+plotnine
+pandas
+altair
+vl-convert-python
