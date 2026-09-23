@@ -73,7 +73,10 @@ Magic-move works on:
 
 - **Code blocks** (any language Quarto highlights) — tokens are matched and moved between states
 - **Math** (`$$ ... $$`) — equations morph between steps
-- **SVG output** (e.g. `dev: svg` R chunks with ggplot2 or grid graphics) — shapes and paths animate between states
+- **SVG output** — consecutive `.magic-move` slides that each render an inline SVG have their shapes (`rect`, `circle`, `line`, `polyline`, `polygon`, `ellipse`, `path`, and R-style glyph text) matched and morphed between states. This works with any plotting library whose SVG output uses plain, literal shape elements with stable attributes across renders — verified with:
+  - **R**: ggplot2, grid, base R graphics, lattice (all render through R's `dev: svg` Cairo device)
+  - **Python**: matplotlib, seaborn, plotnine (bar/line/area marks — not scatter/point markers, see limitations), and Altair with `alt.renderers.enable("svg")`
+  - **Julia**: CairoMakie, and Plots.jl with the GR backend (`Plots.gr(fmt = :svg)`)
 
 See the `example*.qmd` files in this repo for runnable demos of each.
 
@@ -81,6 +84,11 @@ See the `example*.qmd` files in this repo for runnable demos of each.
 
 - Token matching is content-based; significantly different code may fade in/out instead of animating smoothly
 - Coarse tokenization from Quarto's syntax highlighter means very fine-grained punctuation animation isn't always perfect
+- SVG shape matching has no fallback for elements whose grouping key (fill/stroke/clip-path) differs between renders. This breaks a few specific cases:
+  - **Plotly (via kaleido)** and **ggiraph's `girafe()` widgets** stamp a random clip-path id on every render, so shapes never match across slides and the transition falls back to a hard cut
+  - **Gadfly.jl** positions marks via an ancestor `<g transform>` rather than each element's own coordinates, which the matcher doesn't read
+  - **matplotlib/seaborn/plotnine scatter or point markers** render as `<use>` glyph references rather than literal `<circle>`/`<path>` shapes, so they don't animate (bars/lines/areas from the same libraries are unaffected)
+  - **Charts rendered via Quarto's Observable JS (`{ojs}`) engine** — e.g. D3, Observable Plot, Vega-Lite — produce fully compatible SVG shapes, but render *after* Reveal's `ready` event, while this extension only scans for SVG content once, at `ready`. So `{ojs}`-rendered charts never get picked up as a magic-move sequence at all, regardless of their SVG shape compatibility.
 
 ## License
 
