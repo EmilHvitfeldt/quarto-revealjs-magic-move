@@ -5,6 +5,11 @@ project:
     - index.qmd
     - examples/basic.qmd
     - examples/slide-based.qmd
+    - examples/svgs.qmd
+    - examples/svgs-r-extra.qmd
+    - examples/svgs-python.qmd
+    - examples/svgs-julia.qmd
+    - examples/svgs-js.qmd
 
 website:
   title: "quarto-revealjs-magic-move"
@@ -18,6 +23,16 @@ website:
             text: Code (fragments)
           - href: examples/slide-based.qmd
             text: Code (slides)
+          - href: examples/svgs.qmd
+            text: SVG (ggplot2 / grid)
+          - href: examples/svgs-r-extra.qmd
+            text: SVG (other R packages)
+          - href: examples/svgs-python.qmd
+            text: SVG (Python)
+          - href: examples/svgs-julia.qmd
+            text: SVG (Julia)
+          - href: examples/svgs-js.qmd
+            text: SVG (JS, not yet supported)
     right:
       - icon: github
         href: https://github.com/emilhvitfeldt/quarto-revealjs-magic-move

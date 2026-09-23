@@ -143,6 +143,26 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <a class="dropdown-item" href="./examples/slide-based.html">
  <span class="dropdown-text">Code (slides)</span></a>
   </li>  
+        <li>
+    <a class="dropdown-item" href="./examples/svgs.html">
+ <span class="dropdown-text">SVG (ggplot2 / grid)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./examples/svgs-r-extra.html">
+ <span class="dropdown-text">SVG (other R packages)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./examples/svgs-python.html">
+ <span class="dropdown-text">SVG (Python)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./examples/svgs-julia.html">
+ <span class="dropdown-text">SVG (Julia)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./examples/svgs-js.html">
+ <span class="dropdown-text">SVG (JS, not yet supported)</span></a>
+  </li>  
     </ul>
   </li>
 </ul>
@@ -180,6 +200,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul class="collapse">
   <li><a href="#code-div-based-fragments" id="toc-code-div-based-fragments" class="nav-link" data-scroll-target="#code-div-based-fragments">Code — div-based fragments</a></li>
   <li><a href="#code-slide-based" id="toc-code-slide-based" class="nav-link" data-scroll-target="#code-slide-based">Code — slide-based</a></li>
+  <li><a href="#svg-output-ggplot2-grid" id="toc-svg-output-ggplot2-grid" class="nav-link" data-scroll-target="#svg-output-ggplot2-grid">SVG output — ggplot2 / grid</a></li>
+  <li><a href="#svg-output-other-r-packages" id="toc-svg-output-other-r-packages" class="nav-link" data-scroll-target="#svg-output-other-r-packages">SVG output — other R packages</a></li>
+  <li><a href="#svg-output-python" id="toc-svg-output-python" class="nav-link" data-scroll-target="#svg-output-python">SVG output — Python</a></li>
+  <li><a href="#svg-output-julia" id="toc-svg-output-julia" class="nav-link" data-scroll-target="#svg-output-julia">SVG output — Julia</a></li>
   </ul></li>
   <li><a href="#license" id="toc-license" class="nav-link" data-scroll-target="#license">License</a></li>
   </ul>
@@ -264,7 +288,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <ul>
 <li><strong>Code blocks</strong> (any language Quarto highlights) — tokens are matched and moved between states</li>
 <li><strong>Math</strong> (<code>$$ ... $$</code>) — equations morph between steps</li>
-<li><strong>SVG output</strong> (e.g.&nbsp;<code>dev: svg</code> R chunks with ggplot2 or grid graphics) — shapes and paths animate between states</li>
+<li><strong>SVG output</strong> — consecutive <code>.magic-move</code> slides that each render an inline SVG have their shapes (<code>rect</code>, <code>circle</code>, <code>line</code>, <code>polyline</code>, <code>polygon</code>, <code>ellipse</code>, <code>path</code>, and R-style glyph text) matched and morphed between states. This works with any plotting library whose SVG output uses plain, literal shape elements with stable attributes across renders — verified with:
+<ul>
+<li><strong>R</strong>: ggplot2, grid, base R graphics, lattice (all render through R’s <code>dev: svg</code> Cairo device)</li>
+<li><strong>Python</strong>: matplotlib, seaborn, plotnine (bar/line/area marks — not scatter/point markers, see limitations), and Altair with <code>alt.renderers.enable("svg")</code></li>
+<li><strong>Julia</strong>: CairoMakie, and Plots.jl with the GR backend (<code>Plots.gr(fmt = :svg)</code>)</li>
+</ul></li>
 </ul>
 </section>
 </section>
@@ -273,6 +302,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <ul>
 <li>Token matching is content-based; significantly different code may fade in/out instead of animating smoothly</li>
 <li>Coarse tokenization from Quarto’s syntax highlighter means very fine-grained punctuation animation isn’t always perfect</li>
+<li>SVG shape matching has no fallback for elements whose grouping key (fill/stroke/clip-path) differs between renders. This breaks a few specific cases:
+<ul>
+<li><strong>Plotly (via kaleido)</strong> and <strong>ggiraph’s <code>girafe()</code> widgets</strong> stamp a random clip-path id on every render, so shapes never match across slides and the transition falls back to a hard cut</li>
+<li><strong>Gadfly.jl</strong> positions marks via an ancestor <code>&lt;g transform&gt;</code> rather than each element’s own coordinates, which the matcher doesn’t read</li>
+<li><strong>matplotlib/seaborn/plotnine scatter or point markers</strong> render as <code>&lt;use&gt;</code> glyph references rather than literal <code>&lt;circle&gt;</code>/<code>&lt;path&gt;</code> shapes, so they don’t animate (bars/lines/areas from the same libraries are unaffected)</li>
+<li><strong>Charts rendered via Quarto’s Observable JS (<code>{ojs}</code>) engine</strong> — e.g.&nbsp;D3, Observable Plot, Vega-Lite — produce fully compatible SVG shapes, but render <em>after</em> Reveal’s <code>ready</code> event, while this extension only scans for SVG content once, at <code>ready</code>. So <code>{ojs}</code>-rendered charts never get picked up as a magic-move sequence at all, regardless of their SVG shape compatibility.</li>
+</ul></li>
 </ul>
 </section>
 <section id="examples" class="level2">
@@ -294,6 +330,43 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </ul>
 <iframe src="examples/slide-based.html" width="100%" height="500" style="border: 1px solid #ccc; border-radius: 4px;">
 </iframe>
+</section>
+<section id="svg-output-ggplot2-grid" class="level3">
+<h3 class="anchored" data-anchor-id="svg-output-ggplot2-grid">SVG output — ggplot2 / grid</h3>
+<ul>
+<li><a href="examples/svgs.html" class="btn btn-primary">View Example</a></li>
+<li><a href="https://github.com/emilhvitfeldt/quarto-revealjs-magic-move/blob/main/examples/svgs.qmd" class="btn btn-secondary">Source Code</a></li>
+</ul>
+<iframe src="examples/svgs.html" width="100%" height="500" style="border: 1px solid #ccc; border-radius: 4px;">
+</iframe>
+</section>
+<section id="svg-output-other-r-packages" class="level3">
+<h3 class="anchored" data-anchor-id="svg-output-other-r-packages">SVG output — other R packages</h3>
+<ul>
+<li><a href="examples/svgs-r-extra.html" class="btn btn-primary">View Example</a></li>
+<li><a href="https://github.com/emilhvitfeldt/quarto-revealjs-magic-move/blob/main/examples/svgs-r-extra.qmd" class="btn btn-secondary">Source Code</a></li>
+</ul>
+<iframe src="examples/svgs-r-extra.html" width="100%" height="500" style="border: 1px solid #ccc; border-radius: 4px;">
+</iframe>
+</section>
+<section id="svg-output-python" class="level3">
+<h3 class="anchored" data-anchor-id="svg-output-python">SVG output — Python</h3>
+<ul>
+<li><a href="examples/svgs-python.html" class="btn btn-primary">View Example</a></li>
+<li><a href="https://github.com/emilhvitfeldt/quarto-revealjs-magic-move/blob/main/examples/svgs-python.qmd" class="btn btn-secondary">Source Code</a></li>
+</ul>
+<iframe src="examples/svgs-python.html" width="100%" height="500" style="border: 1px solid #ccc; border-radius: 4px;">
+</iframe>
+</section>
+<section id="svg-output-julia" class="level3">
+<h3 class="anchored" data-anchor-id="svg-output-julia">SVG output — Julia</h3>
+<ul>
+<li><a href="examples/svgs-julia.html" class="btn btn-primary">View Example</a></li>
+<li><a href="https://github.com/emilhvitfeldt/quarto-revealjs-magic-move/blob/main/examples/svgs-julia.qmd" class="btn btn-secondary">Source Code</a></li>
+</ul>
+<iframe src="examples/svgs-julia.html" width="100%" height="500" style="border: 1px solid #ccc; border-radius: 4px;">
+</iframe>
+<p>Charts rendered via Quarto’s Observable JS (<code>{ojs}</code>) engine — D3, Observable Plot, Vega-Lite — don’t animate yet (see <a href="#limitations">Limitations</a> above); no example is shown here for that reason.</p>
 <ul>
 <li><a href="https://github.com/emilhvitfeldt/quarto-revealjs-magic-move" class="btn btn-secondary">Full Source Code</a></li>
 </ul>

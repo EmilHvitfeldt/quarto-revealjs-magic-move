@@ -1,0 +1,75 @@
+---
+title: Julia SVG Magic Move Demo
+format: revealjs
+engine: julia
+revealjs-plugins:
+  - magic-move
+---
+
+<!--
+See the Part A (Julia) write-up from the JS/Julia compatibility investigation
+for the full picture. Summary: CairoMakie's SVG output uses the same two
+patterns magic-move.js was built around for R (grid/ggplot2) --- point
+markers as filled Bezier <path>s with absolute coordinates baked into `d`,
+and axis/tick text as <g fill="..."><use .../></g> groups --- so it morphs
+correctly. Plots.jl's default GR backend renders point markers as literal
+<circle>s (also compatible) but bakes axis tick numerals into individual
+glyph <path>s sharing the same clip-path as the data markers; when the
+axis range changes between two slides those numeral shapes can get
+accidentally paired up by matchSvgPaths's clip+fill heuristic, so this demo
+avoids that entirely by fixing identical axis limits/ticks across each
+slide pair. Gadfly was tested and excluded: Compose.jl (Gadfly's rendering
+backend) positions every mark via an ancestor `<g transform="translate(x,y)">`
+wrapper and leaves the mark's own geometry attributes at (0,0), which
+magic-move.js's attribute-based parsers never look at, so nothing animates.
+-->
+
+## CairoMakie Points - Low {.magic-move}
+
+```{julia}
+#| label: "makie-low"
+#| fig-format: svg
+using CairoMakie
+CairoMakie.activate!(type = "svg")
+f = Figure(size = (700, 500))
+ax = Axis(f[1, 1], limits = (0, 4, 0, 4))
+scatter!(ax, [1, 2, 3], [1, 2, 1], markersize = 30, color = :steelblue)
+f
+```
+
+## CairoMakie Points - High {.magic-move}
+
+```{julia}
+#| label: "makie-high"
+#| fig-format: svg
+using CairoMakie
+CairoMakie.activate!(type = "svg")
+f = Figure(size = (700, 500))
+ax = Axis(f[1, 1], limits = (0, 4, 0, 4))
+scatter!(ax, [1, 2, 3], [2, 3, 2], markersize = 30, color = :steelblue)
+f
+```
+
+## Break
+
+## GR (Plots.jl) Points - Left {.magic-move}
+
+```{julia}
+#| label: "gr-left"
+#| fig-format: svg
+import Plots
+Plots.gr(fmt = :svg)
+Plots.scatter([1, 2, 3], [1, 2, 1], xlims = (0, 4), ylims = (0, 4),
+  xticks = 0:4, yticks = 0:4, markersize = 12, label = "", legend = false)
+```
+
+## GR (Plots.jl) Points - Right {.magic-move}
+
+```{julia}
+#| label: "gr-right"
+#| fig-format: svg
+import Plots
+Plots.gr(fmt = :svg)
+Plots.scatter([2, 3, 4], [3, 4, 3], xlims = (0, 4), ylims = (0, 4),
+  xticks = 0:4, yticks = 0:4, markersize = 12, label = "", legend = false)
+```

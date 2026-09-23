@@ -1,0 +1,228 @@
+---
+title: Python SVG Magic Move Demo
+format: revealjs
+jupyter: python3
+fig-format: svg
+revealjs-plugins:
+  - magic-move
+---
+
+## Matplotlib Bar Chart - Low {.magic-move}
+
+```{python}
+#| label: "mpl-bar-before"
+#| fig-format: svg
+import matplotlib.pyplot as plt
+
+fig, ax = plt.subplots()
+ax.bar(["A", "B", "C", "D"], [25, 40, 20, 15], color="steelblue")
+ax.set_ylim(0, 50)
+plt.show()
+```
+
+## Matplotlib Bar Chart - Shuffled {.magic-move}
+
+```{python}
+#| label: "mpl-bar-after"
+#| fig-format: svg
+import matplotlib.pyplot as plt
+
+fig, ax = plt.subplots()
+ax.bar(["A", "B", "C", "D"], [10, 45, 30, 5], color="steelblue")
+ax.set_ylim(0, 50)
+plt.show()
+```
+
+## Break
+
+## Matplotlib Line Chart - Wave 1 {.magic-move}
+
+```{python}
+#| label: "mpl-line-wave1"
+#| fig-format: svg
+import matplotlib.pyplot as plt
+
+fig, ax = plt.subplots()
+ax.plot([0, 1, 2, 3, 4], [0, 1, 0, 1, 0], linewidth=4, color="darkorange")
+ax.set_ylim(-1, 2)
+plt.show()
+```
+
+## Matplotlib Line Chart - Wave 2 {.magic-move}
+
+```{python}
+#| label: "mpl-line-wave2"
+#| fig-format: svg
+import matplotlib.pyplot as plt
+
+fig, ax = plt.subplots()
+ax.plot([0, 1, 2, 3, 4], [1, 0, 1, 0, 1], linewidth=4, color="darkorange")
+ax.set_ylim(-1, 2)
+plt.show()
+```
+
+## Break
+
+## Matplotlib Area Chart - Normal {.magic-move}
+
+```{python}
+#| label: "mpl-area-normal"
+#| fig-format: svg
+import matplotlib.pyplot as plt
+
+x = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+y = [1, 3, 2, 5, 4, 6, 5, 7, 6, 8]
+fig, ax = plt.subplots()
+ax.fill_between(x, y, color="forestgreen", alpha=0.7)
+ax.set_xlim(0, 11)
+ax.set_ylim(0, 10)
+plt.show()
+```
+
+## Matplotlib Area Chart - Shifted {.magic-move}
+
+```{python}
+#| label: "mpl-area-shifted"
+#| fig-format: svg
+import matplotlib.pyplot as plt
+
+x = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+y = [2, 4, 3, 6, 5, 7, 6, 8, 7, 9]
+fig, ax = plt.subplots()
+ax.fill_between(x, y, color="forestgreen", alpha=0.7)
+ax.set_xlim(0, 11)
+ax.set_ylim(0, 10)
+plt.show()
+```
+
+## Break
+
+## Seaborn Bar Chart - Low {.magic-move}
+
+```{python}
+#| label: "seaborn-bar-before"
+#| fig-format: svg
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+fig, ax = plt.subplots()
+sns.barplot(x=["A", "B", "C", "D"], y=[25, 40, 20, 15], color="steelblue", ax=ax)
+ax.set_ylim(0, 50)
+plt.show()
+```
+
+## Seaborn Bar Chart - Shuffled {.magic-move}
+
+```{python}
+#| label: "seaborn-bar-after"
+#| fig-format: svg
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+fig, ax = plt.subplots()
+sns.barplot(x=["A", "B", "C", "D"], y=[10, 45, 30, 5], color="steelblue", ax=ax)
+ax.set_ylim(0, 50)
+plt.show()
+```
+
+## Break
+
+## Plotnine Bar Chart - Low {.magic-move}
+
+```{python}
+#| label: "plotnine-bar-before"
+#| fig-format: svg
+from plotnine import ggplot, aes, geom_col, ylim, theme_minimal
+import pandas as pd
+
+df = pd.DataFrame({"category": ["A", "B", "C", "D"], "value": [25, 40, 20, 15]})
+(
+    ggplot(df, aes(x="category", y="value"))
+    + geom_col(fill="steelblue")
+    + ylim(0, 50)
+    + theme_minimal()
+)
+```
+
+## Plotnine Bar Chart - Shuffled {.magic-move}
+
+```{python}
+#| label: "plotnine-bar-after"
+#| fig-format: svg
+from plotnine import ggplot, aes, geom_col, ylim, theme_minimal
+import pandas as pd
+
+df = pd.DataFrame({"category": ["A", "B", "C", "D"], "value": [10, 45, 30, 5]})
+(
+    ggplot(df, aes(x="category", y="value"))
+    + geom_col(fill="steelblue")
+    + ylim(0, 50)
+    + theme_minimal()
+)
+```
+
+## Break
+
+## Plotnine Line Chart - Wave 1 {.magic-move}
+
+```{python}
+#| label: "plotnine-line-wave1"
+#| fig-format: svg
+from plotnine import ggplot, aes, geom_line, ylim, theme_minimal
+import pandas as pd
+
+df = pd.DataFrame({"x": [0, 1, 2, 3, 4], "y": [0, 1, 0, 1, 0]})
+(
+    ggplot(df, aes(x="x", y="y"))
+    + geom_line(color="darkorange", size=2)
+    + ylim(-1, 2)
+    + theme_minimal()
+)
+```
+
+## Plotnine Line Chart - Wave 2 {.magic-move}
+
+```{python}
+#| label: "plotnine-line-wave2"
+#| fig-format: svg
+from plotnine import ggplot, aes, geom_line, ylim, theme_minimal
+import pandas as pd
+
+df = pd.DataFrame({"x": [0, 1, 2, 3, 4], "y": [1, 0, 1, 0, 1]})
+(
+    ggplot(df, aes(x="x", y="y"))
+    + geom_line(color="darkorange", size=2)
+    + ylim(-1, 2)
+    + theme_minimal()
+)
+```
+
+## Break
+
+## Altair Bar Chart - Low {.magic-move}
+
+```{python}
+#| label: "altair-bar-before"
+#| fig-format: svg
+import altair as alt
+import pandas as pd
+
+alt.renderers.enable("svg")
+
+df = pd.DataFrame({"category": ["A", "B", "C", "D"], "value": [25, 40, 20, 15]})
+alt.Chart(df).mark_bar().encode(x="category", y=alt.Y("value", scale=alt.Scale(domain=[0, 50])))
+```
+
+## Altair Bar Chart - Shuffled {.magic-move}
+
+```{python}
+#| label: "altair-bar-after"
+#| fig-format: svg
+import altair as alt
+import pandas as pd
+
+alt.renderers.enable("svg")
+
+df = pd.DataFrame({"category": ["A", "B", "C", "D"], "value": [10, 45, 30, 5]})
+alt.Chart(df).mark_bar().encode(x="category", y=alt.Y("value", scale=alt.Scale(domain=[0, 50])))
+```
