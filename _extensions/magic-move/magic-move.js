@@ -607,11 +607,11 @@ async function inlineSvgImages(slide) {
   const svgImages = slide.querySelectorAll('img[src$=".svg"], img[data-src$=".svg"]');
 
   for (const img of svgImages) {
-    try {
-      // Use src if available, otherwise data-src (for lazy-loaded images)
-      const svgUrl = img.src || img.getAttribute('data-src');
-      if (!svgUrl || !svgUrl.endsWith('.svg')) continue;
+    // Use src if available, otherwise data-src (for lazy-loaded images)
+    const svgUrl = img.src || img.getAttribute('data-src');
+    if (!svgUrl || !svgUrl.endsWith('.svg')) continue;
 
+    try {
       // Capture computed dimensions BEFORE replacing
       const computedStyle = window.getComputedStyle(img);
       const rect = img.getBoundingClientRect();
