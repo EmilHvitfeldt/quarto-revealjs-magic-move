@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.0
+
+### Bug fixes
+
+- Fixed a `ReferenceError` in SVG magic-move's catch block that killed the whole feature whenever the fallback path was hit.
+- Unchanged `geom_point` circles no longer spuriously swap positions during SVG magic-move.
+
+### Internal
+
+- Extended visual regression testing to cover SVG shape morphing, including examples against R, Python, and Julia plotting libraries.
+
 ## 0.2.0
 
 ### New features
