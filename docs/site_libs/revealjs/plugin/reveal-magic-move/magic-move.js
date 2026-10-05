@@ -3061,6 +3061,30 @@ function animateToStep(container, fromStep, toStep, options = {}) {
   const scale = getRevealScale();
   const wrapper = container.closest('.magic-move-wrapper') || container.parentElement;
 
+  // stop-and-retarget: a previous call on this same wrapper may still be mid-flight
+  // (its exit clones still fading, its height Animation still running) if this call
+  // was triggered by navigating the opposite direction before that one settled.
+  // Unconditionally tear those down *before* measuring/building anything new, so the
+  // interrupted call's leftovers don't keep rendering on top of this one — without
+  // this, the old clones' own `.finished` cleanup only runs on their own original
+  // schedule, well after this call has already moved on.
+  if (wrapper._mmActiveClones) {
+    for (const { clone, anim } of wrapper._mmActiveClones) {
+      anim.cancel();
+      clone.remove();
+    }
+  }
+  wrapper._mmActiveClones = [];
+  if (wrapper._mmHeightAnim) {
+    wrapper._mmHeightAnim.cancel();
+    wrapper._mmHeightAnim = null;
+  }
+  // Only the most recent call is allowed to reset `overflow` once its own clones/height
+  // animation settle; an interrupted call's completion handler (still pending below)
+  // must not clobber the overflow a newer call is relying on.
+  const myGen = (wrapper._mmGen || 0) + 1;
+  wrapper._mmGen = myGen;
+
   // Container height animation: measure the wrapper's current ("from") height before
   // anything changes, so it can be animated to the new step's natural height below —
   // same FLIP-style measure-before/measure-after as the token positions. Its actual
@@ -3111,7 +3135,13 @@ function animateToStep(container, fromStep, toStep, options = {}) {
         [{ opacity: 1 }, { opacity: 0 }],
         { duration: sched.durationMs, delay: sched.startMs, easing: sched.easing, fill: 'backwards' }
       );
-      const cleanup = () => clone.remove();
+      const entry = { clone, anim };
+      wrapper._mmActiveClones.push(entry);
+      const cleanup = () => {
+        clone.remove();
+        const idx = wrapper._mmActiveClones.indexOf(entry);
+        if (idx !== -1) wrapper._mmActiveClones.splice(idx, 1);
+      };
       anim.finished.then(cleanup).catch(cleanup);
       cloneAnimations.push(anim.finished.catch(() => {}));
     }
@@ -3167,9 +3197,13 @@ function animateToStep(container, fromStep, toStep, options = {}) {
       [{ height: `${fromHeightCSS}px` }, { height: `${toHeightCSS}px` }],
       { duration: heightDuration, delay: heightDelay, easing, fill: 'backwards' }
     );
+    wrapper._mmHeightAnim = heightAnim;
     heightAnimFinished = heightAnim.finished.catch(() => {});
   }
   Promise.allSettled([...cloneAnimations, heightAnimFinished]).then(() => {
+    // Skip if a later call already interrupted this one (and so already reset
+    // overflow itself, or is still relying on it being 'visible' for its own clones).
+    if (wrapper._mmGen !== myGen) return;
     wrapper.style.overflow = '';
   });
 

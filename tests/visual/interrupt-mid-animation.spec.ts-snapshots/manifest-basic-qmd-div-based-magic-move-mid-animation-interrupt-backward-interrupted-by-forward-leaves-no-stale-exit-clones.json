@@ -1,0 +1,18 @@
+{
+  "key": "basic-qmd-div-based-magic-move-mid-animation-interrupt-backward-interrupted-by-forward-leaves-no-stale-exit-clones",
+  "title": "backward-interrupted-by-forward leaves no stale exit clones",
+  "frames": [
+    {
+      "name": "interrupt-step3-settled.png",
+      "label": "Step 3 (settled)"
+    },
+    {
+      "name": "interrupt-mid-redirect.png",
+      "label": "Interrupted mid-redirect"
+    },
+    {
+      "name": "interrupt-settled-step3.png",
+      "label": "Settled back at step 3"
+    }
+  ]
+}
